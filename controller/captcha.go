@@ -36,5 +36,7 @@ func ParseCaptcha(c *gin.Context) {
 	}
 	if captcha.ParseCaptcha(id, requestId) {
 		response.Response(c, response.SUCCESS, nil)
+		return
 	}
+	response.Response(c, response.ParamError, nil)
 }
