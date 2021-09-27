@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"Moreover/internal/pkg/redis"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"time"
@@ -15,11 +16,11 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func GetToken(studentID string)  string {
+func GenerateToken(studentID string) string {
 	newClaims := Claims{
 		studentID, jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(tokenExpireDuration).Unix(),
-			Issuer: "flying",
+			Issuer:    "flying",
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
@@ -27,10 +28,11 @@ func GetToken(studentID string)  string {
 	if err != nil {
 		fmt.Printf("tokenSign fail, err: %v\n", err)
 	}
+	redis.DB.Set("token"+studentID, tokenString, tokenExpireDuration)
 	return tokenString
 }
 
-func ParseToken(token string) *Claims{
+func ParseToken(token string) *Claims {
 	var newClaims = new(Claims)
 	_, err := jwt.ParseWithClaims(token, newClaims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil

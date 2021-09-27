@@ -15,7 +15,7 @@ func Register(c *gin.Context) {
 		response.Response(c, code, nil)
 		return
 	}
-	token := jwt.GetToken(id)
+	token := jwt.GenerateToken(id)
 	response.Response(c, code, gin.H{
 		"token": token,
 	})
@@ -29,7 +29,7 @@ func Login(c *gin.Context) {
 		response.Response(c, code, nil)
 		return
 	}
-	token := jwt.GetToken(id)
+	token := jwt.GenerateToken(id)
 	response.Response(c, code, gin.H{
 		"token": token,
 	})
