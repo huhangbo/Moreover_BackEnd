@@ -6,8 +6,10 @@ import (
 
 var Router *gin.Engine
 
-func InitRouter(port string)  {
+func InitRouter(port string) {
 	Router = gin.Default()
+	CaptchaRouter()
 	UserRouter()
+
 	panic(Router.Run(port))
 }
