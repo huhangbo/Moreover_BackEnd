@@ -1,14 +1,14 @@
 package main
 
 import (
-	"Moreover/internal/pkg/mysql"
-	"Moreover/internal/pkg/redis"
+	"Moreover/pkg/mysql"
+	"Moreover/pkg/redis"
 	"Moreover/router"
 	"Moreover/setting"
 	"fmt"
 )
 
-func main()  {
+func main() {
 	setting.Init()
 	mysql.Init(setting.Config.MySQLConfig)
 	defer mysql.Close()

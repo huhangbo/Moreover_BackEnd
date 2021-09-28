@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"Moreover/internal/pkg/jwt"
-	"Moreover/internal/pkg/response"
 	"Moreover/internal/pkg/user"
+	"Moreover/pkg/jwt"
+	"Moreover/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 

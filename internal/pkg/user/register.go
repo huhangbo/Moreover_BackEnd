@@ -1,13 +1,13 @@
 package user
 
 import (
-	"Moreover/internal/pkg/mysql"
-	"Moreover/internal/pkg/response"
+	"Moreover/pkg/mysql"
+	"Moreover/pkg/response"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Register(id, password string) int{
+func Register(id, password string) int {
 	if len(password) < 6 || len(id) != 8 {
 		return response.ParamError
 	}
@@ -24,7 +24,7 @@ func Register(id, password string) int{
 	return response.SUCCESS
 }
 
-func IsUserExist(id string) bool{
+func IsUserExist(id string) bool {
 	var count int
 	sql := `SELECT COUNT(student_id) FROM user WHERE student_id = ?`
 	if err := mysql.DB.Get(&count, sql, id); err != nil {
@@ -46,8 +46,7 @@ func GenerateHashPassword(password string) (string, error) {
 	return string(hashPassword), nil
 }
 
-
-func RegisterUser (id , hashPassword string) error{
+func RegisterUser(id, hashPassword string) error {
 	sqlRegister := `INSERT INTO user (student_id, password, permission) VALUES(?, ?, ?)`
 	sqlInsertInfo := `INSERT INTO user_info (student_id, nickname, sex, avatar, description) VALUES(?, ?, ?, ?, ?)`
 	sql, err := mysql.DB.Begin()
@@ -55,7 +54,7 @@ func RegisterUser (id , hashPassword string) error{
 		fmt.Printf("register begin fail, err: %v\n", err)
 		return err
 	}
-	if _,err :=sql.Exec(sqlRegister, id, hashPassword, 1); err != nil {
+	if _, err := sql.Exec(sqlRegister, id, hashPassword, 1); err != nil {
 		fmt.Printf("insert user fail, err: %v\n", err)
 		return err
 	}
@@ -63,7 +62,7 @@ func RegisterUser (id , hashPassword string) error{
 		fmt.Printf("insert userInfo fail, err: %v\n", err)
 		return err
 	}
-	if err :=sql.Commit(); err != nil {
+	if err := sql.Commit(); err != nil {
 		fmt.Printf("register commit fail, err: %v\n", err)
 		return err
 	}

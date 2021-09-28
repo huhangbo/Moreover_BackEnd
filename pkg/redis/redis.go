@@ -18,6 +18,7 @@ func Init(config *setting.RedisConfig) {
 	})
 	if _, err := DB.Ping().Result(); err != nil {
 		fmt.Printf("Connect redis failed, err: %v\n", err)
+		panic(err)
 	}
 
 }

@@ -1,9 +1,9 @@
 package response
 
-var CodeMessage  = map[int]string {
+var CodeMessage = map[int]string{
 	SUCCESS:         "成功",
 	FAIL:            "请求失败",
-	AuthError:        "用户认证失败",
+	AuthError:       "用户认证失败",
 	ERROR:           "系统错误",
 	UserExist:       "用户已存在",
 	UserNotExist:    "用户不存在",

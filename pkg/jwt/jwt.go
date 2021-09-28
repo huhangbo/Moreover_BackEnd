@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"Moreover/internal/pkg/redis"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"time"
@@ -12,13 +11,13 @@ var jwtKey = []byte("moreover")
 var tokenExpireDuration = time.Hour * 24 * 7
 
 type Claims struct {
-	StudentID string
+	Publisher string
 	jwt.StandardClaims
 }
 
-func GenerateToken(studentID string) string {
+func GenerateToken(publisher string) string {
 	newClaims := Claims{
-		studentID, jwt.StandardClaims{
+		publisher, jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(tokenExpireDuration).Unix(),
 			Issuer:    "flying",
 		},
@@ -28,18 +27,22 @@ func GenerateToken(studentID string) string {
 	if err != nil {
 		fmt.Printf("tokenSign fail, err: %v\n", err)
 	}
-	redis.DB.Set("token"+studentID, tokenString, tokenExpireDuration)
 	return tokenString
 }
 
 func ParseToken(token string) *Claims {
 	var newClaims = new(Claims)
-	_, err := jwt.ParseWithClaims(token, newClaims, func(token *jwt.Token) (interface{}, error) {
+	tmpToken, err := jwt.ParseWithClaims(token, newClaims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
 	if err != nil {
 		fmt.Printf("parseToken fail, err: %v\n", err)
 		return nil
 	}
-	return newClaims
+	if tmpToken != nil {
+		if tmpClaims, ok := tmpToken.Claims.(*Claims); ok && tmpToken.Valid {
+			return tmpClaims
+		}
+	}
+	return nil
 }

@@ -2,8 +2,8 @@ package controller
 
 import (
 	"Moreover/internal/pkg/captcha"
-	"Moreover/internal/pkg/redis"
-	"Moreover/internal/pkg/response"
+	"Moreover/pkg/redis"
+	"Moreover/pkg/response"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -32,6 +32,7 @@ func ParseCaptcha(c *gin.Context) {
 	if err != nil {
 		fmt.Printf("parse captch from redis fail, err: %v\n", err)
 		response.Response(c, response.ERROR, nil)
+		panic(err)
 		return
 	}
 	if captcha.ParseCaptcha(id, requestId) {

@@ -11,7 +11,6 @@ func GenerateCaptcha() (string, string) {
 	driver := base64Captcha.NewDriverDigit(80, 240, 5, 0.7, 80)
 	cp := base64Captcha.NewCaptcha(driver, store)
 	id, base64, err := cp.Generate()
-	fmt.Printf(id, base64)
 	if err != nil {
 		fmt.Printf("generate captcha fail, err: %v\n", err)
 	}
