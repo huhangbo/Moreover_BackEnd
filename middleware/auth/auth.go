@@ -21,8 +21,8 @@ func Auth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		publisher := claim.Publisher
-		c.Set("publisher", publisher)
+		StuId := claim.StuId
+		c.Set("stuId", StuId)
 		return
 	}
 }

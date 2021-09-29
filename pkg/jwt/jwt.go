@@ -11,13 +11,13 @@ var jwtKey = []byte("moreover")
 var tokenExpireDuration = time.Hour * 24 * 7
 
 type Claims struct {
-	Publisher string
+	StuId string
 	jwt.StandardClaims
 }
 
-func GenerateToken(publisher string) string {
+func GenerateToken(stuId string) string {
 	newClaims := Claims{
-		publisher, jwt.StandardClaims{
+		stuId, jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(tokenExpireDuration).Unix(),
 			Issuer:    "flying",
 		},
