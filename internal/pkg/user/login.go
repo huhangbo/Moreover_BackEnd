@@ -8,7 +8,7 @@ import (
 )
 
 func Login(id, password string) int {
-	if !IsUserExist(id) {
+	if !isUserExist(id) {
 		return response.UserNotExist
 	}
 	var hashPassword string

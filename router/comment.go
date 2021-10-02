@@ -8,10 +8,11 @@ import (
 func CommentRouter() {
 	r := Router.Group("/comment")
 	{
-		r.POST("/:id", auth.Auth(), commentController.PublishComment)
+		r.POST("/:parentId", auth.Auth(), commentController.PublishComment)
 
-		r.GET("/:commentId", auth.Auth(), commentController.GetCommentById)
+		r.GET("/:parentId/:current/:pageSize", commentController.GetCommentsByPage)
 
 		r.DELETE("/:commentId", auth.Auth(), commentController.DeleteComment)
+
 	}
 }

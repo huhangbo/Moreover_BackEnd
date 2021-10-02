@@ -11,20 +11,20 @@ func Register(id, password string) int {
 	if len(password) < 6 || len(id) != 8 {
 		return response.ParamError
 	}
-	if IsUserExist(id) {
+	if isUserExist(id) {
 		return response.UserExist
 	}
-	hashPassword, hashError := GenerateHashPassword(password)
+	hashPassword, hashError := generateHashPassword(password)
 	if hashError != nil {
 		return response.ERROR
 	}
-	if err := RegisterUser(id, hashPassword); err != nil {
+	if err := registerUser(id, hashPassword); err != nil {
 		return response.ERROR
 	}
 	return response.SUCCESS
 }
 
-func IsUserExist(id string) bool {
+func isUserExist(id string) bool {
 	var count int
 	sql := `SELECT COUNT(student_id) FROM user WHERE student_id = ?`
 	if err := mysql.DB.Get(&count, sql, id); err != nil {
@@ -37,7 +37,7 @@ func IsUserExist(id string) bool {
 	return false
 }
 
-func GenerateHashPassword(password string) (string, error) {
+func generateHashPassword(password string) (string, error) {
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		fmt.Printf("generate hashPassword fail, err: %v\n", err)
@@ -46,7 +46,7 @@ func GenerateHashPassword(password string) (string, error) {
 	return string(hashPassword), nil
 }
 
-func RegisterUser(id, hashPassword string) error {
+func registerUser(id, hashPassword string) error {
 	sqlRegister := `INSERT INTO user (student_id, password, permission) VALUES(?, ?, ?)`
 	sqlInsertInfo := `INSERT INTO user_info (student_id, nickname, sex, avatar, description) VALUES(?, ?, ?, ?, ?)`
 	sql, err := mysql.DB.Begin()

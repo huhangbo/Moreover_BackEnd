@@ -95,9 +95,8 @@ func GetTotal(category string, size int) (int, int, int) {
 	code, total, totalPage := getTotalFromRedis(category, size)
 	if code != response.SUCCESS {
 		code, total, totalPage = getTotalFromMysql(category, size)
-		return code, total, totalPage
 	}
-	return response.SUCCESS, total, totalPage
+	return code, total, totalPage
 }
 
 func getActivityByIdFromRedis(activityId string) (int, model.Activity) {

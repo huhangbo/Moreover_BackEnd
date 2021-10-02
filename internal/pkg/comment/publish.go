@@ -45,8 +45,8 @@ func publishCommentToRedis(comment model.Comment) int {
 }
 
 func publishCommentToMysql(comment model.Comment) int {
-	sql := `INSERT INTO comment (create_time, update_time, comment_id, publisher, parent_id, message)
-			VALUES (:create_time, :update_time, :comment_id, :publisher, :parent_id, :message)`
+	sql := `INSERT INTO comment (create_time, update_time, comment_id, publisher, replier, parent_id, message)
+			VALUES (:create_time, :update_time, :comment_id, :publisher, :replier, :parent_id, :message)`
 	if _, err := mysql.DB.NamedExec(sql, comment); err != nil {
 		fmt.Printf("insert comment to mysql fail, err: %v\n", err)
 		return response.ERROR

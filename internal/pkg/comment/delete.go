@@ -24,10 +24,10 @@ func DeleteCommentById(commentId, stuId string) int {
 
 func deleteCommentFromRedis(commentId, parentId string) int {
 	idKey := "comment:id:" + commentId
-	sortKey := "comment:sort:" + parentId
+	sortParentKey := "comment:sort:" + parentId
 	pipe := redis.DB.Pipeline()
 	pipe.Del(idKey)
-	pipe.ZRem(sortKey, commentId)
+	pipe.ZRem(sortParentKey, commentId)
 	if _, err := pipe.Exec(); err != nil {
 		fmt.Printf("delete activity from redis fail, err: %v\n", err)
 		return response.ERROR
@@ -38,8 +38,10 @@ func deleteCommentFromRedis(commentId, parentId string) int {
 func deleteCommentFromMysql(commentId string) int {
 	sql := `UPDATE comment
 			SET deleted = 1
-			WHERE comment_id = ?`
-	if _, err := mysql.DB.Exec(sql, commentId); err != nil {
+			WHERE comment_id = ?
+			OR parent_id = ?`
+
+	if _, err := mysql.DB.Exec(sql, commentId, commentId); err != nil {
 		return response.ERROR
 	}
 	return response.SUCCESS
