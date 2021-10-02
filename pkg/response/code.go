@@ -4,6 +4,7 @@ const (
 	SUCCESS   = 200
 	FAIL      = 400
 	AuthError = 401
+	NotFound  = 404
 	ERROR     = 500
 
 	UserExist       = 1001

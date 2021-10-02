@@ -1,12 +1,14 @@
 package router
 
-import "Moreover/controller"
+import (
+	"Moreover/controller/captchaController"
+)
 
 func CaptchaRouter() {
 	r := Router.Group("/captcha")
 	{
-		r.GET("/generate", controller.GenerateCaptcha)
+		r.GET("/generate", captchaController.GenerateCaptcha)
 
-		r.POST("/parse", controller.ParseCaptcha)
+		r.POST("/parse", captchaController.ParseCaptcha)
 	}
 }

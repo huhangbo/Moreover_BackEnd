@@ -1,4 +1,4 @@
-package controller
+package userController
 
 import (
 	"Moreover/internal/pkg/user"

@@ -1,14 +1,16 @@
 package router
 
-import "Moreover/controller"
+import (
+	"Moreover/controller/userController"
+)
 
 func UserRouter() {
 	r := Router.Group("/user")
 	{
 
-		r.POST("/register", controller.Register)
+		r.POST("/register", userController.Register)
 
-		r.POST("/login", controller.Login)
+		r.POST("/login", userController.Login)
 	}
 
 }

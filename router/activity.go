@@ -1,22 +1,22 @@
 package router
 
 import (
-	"Moreover/controller"
+	"Moreover/controller/activityController"
 	"Moreover/middleware/auth"
 )
 
 func ActivityRouter() {
 	r := Router.Group("/activity")
 	{
-		r.GET("/:activityId", controller.GetActivityById)
+		r.GET("/:activityId", activityController.GetActivityById)
 
-		r.POST("", auth.Auth(), controller.PublishActivity)
+		r.POST("", auth.Auth(), activityController.PublishActivity)
 
-		r.PUT("/:activityId", auth.Auth(), controller.UpdateActivity)
+		r.PUT("/:activityId", auth.Auth(), activityController.UpdateActivity)
 
-		r.DELETE("/:activityId", auth.Auth(), controller.DeleteActivity)
+		r.DELETE("/:activityId", auth.Auth(), activityController.DeleteActivity)
 
-		r.GET("/page/:current/:pageSize", controller.GetActivityByPage)
+		r.GET("/page/:current/:pageSize", activityController.GetActivityByPage)
 
 	}
 }

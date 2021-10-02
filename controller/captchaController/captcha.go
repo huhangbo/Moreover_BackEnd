@@ -1,4 +1,4 @@
-package controller
+package captchaController
 
 import (
 	"Moreover/internal/pkg/captcha"

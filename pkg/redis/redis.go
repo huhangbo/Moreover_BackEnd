@@ -29,3 +29,7 @@ func Close() {
 		fmt.Printf("MySQL close failed, err: %v\n", err)
 	}
 }
+
+func AddStructToHash() {
+
+}

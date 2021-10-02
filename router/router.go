@@ -14,6 +14,7 @@ func InitRouter(port string) {
 	writer, _ := rotatelogs.New(
 		path+"%Y-%m-%d.log",
 		rotatelogs.WithLinkName(path),
+
 		rotatelogs.WithMaxAge(time.Duration(180)*time.Second),
 
 		rotatelogs.WithRotationTime(time.Duration(60)*time.Minute*24),
@@ -23,14 +24,13 @@ func InitRouter(port string) {
 
 	Router = gin.Default()
 
-	//Router = gin.New()
-
-	//Router.Use(logger.Logger()).Use(gin.Recovery())
 	CaptchaRouter()
 
 	UserRouter()
 
 	ActivityRouter()
+
+	CommentRouter()
 
 	panic(Router.Run(port))
 }
