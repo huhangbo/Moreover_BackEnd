@@ -8,7 +8,7 @@ type Comment struct {
 	Publisher     string `db:"publisher" json:"publisher"`
 	Replier       string `db:"replier"   json:"replier"`
 	Deleted       int    `db:"deleted" json:"deleted"`
-	Star          int    `db:"star" json:"star"`
+	Star          int    `json:"star"`
 	Message       string `db:"message" json:"message"`
 	PublisherInfo UserInfo
 	Children      CommentList

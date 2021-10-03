@@ -2,6 +2,7 @@ package activity
 
 import (
 	"Moreover/internal/pkg/user"
+	"Moreover/internal/util"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/redis"
@@ -14,11 +15,11 @@ func GetActivityById(activityId string) (int, model.Activity) {
 	code, tmpActivity := getActivityByIdFromRedis(activityId)
 	if code != response.SUCCESS {
 		code, tmpActivity = getActivityByIdFromMysql(activityId)
-		if code != response.SUCCESS {
-			return code, tmpActivity
+		if code == response.SUCCESS {
+			publishActivityToRedis(tmpActivity)
 		}
-		publishActivityToRedis(tmpActivity)
 	}
+	_, tmpActivity.Star = util.GetTotalById(tmpActivity.ActivityId, "liked")
 	return code, tmpActivity
 }
 

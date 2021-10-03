@@ -13,7 +13,7 @@ type Activity struct {
 	Contact       string `db:"contact" json:"contact"`
 	Location      string `db:"location" json:"location"`
 	Deleted       int    `db:"deleted" json:"deleted"`
-	Star          int    `db:"star" json:"star"`
+	Star          int    `json:"star"`
 	Detail        string `db:"detail" json:"detail"`
 	PublisherInfo UserInfo
 }

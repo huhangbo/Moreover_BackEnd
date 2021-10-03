@@ -37,7 +37,6 @@ func deleteLikeFromMysql(likeId string, deleted int) int {
 	sql := `UPDATE liked
 			SET deleted = ?
 			WHERE like_id = ?`
-
 	if _, err := mysql.DB.Exec(sql, deleted, likeId); err != nil {
 		return response.ERROR
 	}

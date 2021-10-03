@@ -6,7 +6,6 @@ import (
 	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
 	"encoding/json"
-	"fmt"
 	goRedis "github.com/go-redis/redis"
 	"time"
 )
@@ -50,7 +49,6 @@ func publishLikeToMysql(like model.Like) int {
 	sql := `INSERT INTO liked (create_time, update_time, like_id, parent_id, like_user, like_publisher, deleted)
 			VALUES (:create_time, :update_time, :like_id, :parent_id, :like_user, :like_publisher, :deleted);`
 	if _, err := mysql.DB.NamedExec(sql, like); err != nil {
-		fmt.Println(err)
 		return response.ERROR
 	}
 	return response.SUCCESS

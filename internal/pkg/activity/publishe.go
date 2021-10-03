@@ -26,7 +26,6 @@ func publishActivityToRedis(activity model.Activity) int {
 	jsonActivity, err := json.Marshal(activity)
 	publishTime, _ := time.ParseInLocation("2006/01/02 15:05:06", activity.PublishTime, time.Local)
 	if err != nil {
-		fmt.Printf("activityStruct to json fail, err: %v\n", err)
 		return response.ERROR
 	}
 	activityKey := "activity:id:" + activity.ActivityId
@@ -41,7 +40,6 @@ func publishActivityToRedis(activity model.Activity) int {
 	pipe.ZAdd(sortKey, sortActivity)
 	pipe.Set(activityKey, string(jsonActivity), activityExpiration)
 	if _, err := pipe.Exec(); err != nil {
-		fmt.Printf("activityStruct to redis fail, err: %v\n", err)
 		return response.ERROR
 	}
 	return response.SUCCESS

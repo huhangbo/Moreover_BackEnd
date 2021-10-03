@@ -17,9 +17,9 @@ func GetCommentById(commentId string) (int, model.Comment) {
 		code, comment = getCommentByIdFromMysql(commentId)
 		if code == response.SUCCESS {
 			publishCommentToRedis(comment)
-			return code, comment
 		}
 	}
+	_, comment.Star = util.GetTotalById(comment.CommentId, "likes")
 	return code, comment
 }
 

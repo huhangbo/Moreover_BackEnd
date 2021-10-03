@@ -7,16 +7,16 @@ import (
 	goRedis "github.com/go-redis/redis"
 )
 
-func GetTotalById(parentId, category string) (int, int) {
-	code, total := getTotalByIdFromRedis(parentId, category)
+func GetTotalById(parentId, kind string) (int, int) {
+	code, total := getTotalByIdFromRedis(parentId, kind)
 	if code != response.SUCCESS {
-		code, total = getTotalByIdFromMysql(parentId, category)
+		code, total = getTotalByIdFromMysql(parentId, kind)
 	}
 	return code, total
 }
 
-func GetIdsByPageFromRedis(current, size int, parentId, category string) (int, []string) {
-	sortKey := category + ":sort:" + parentId
+func GetIdsByPageFromRedis(current, size int, parentId, kind string) (int, []string) {
+	sortKey := kind + ":sort:" + parentId
 	rangeOpt := goRedis.ZRangeBy{
 		Min:    "-",
 		Max:    "+",
@@ -30,8 +30,8 @@ func GetIdsByPageFromRedis(current, size int, parentId, category string) (int, [
 	return response.SUCCESS, ids
 }
 
-func getTotalByIdFromRedis(parentId, category string) (int, int) {
-	sortKey := category + ":sort:" + parentId
+func getTotalByIdFromRedis(parentId, kind string) (int, int) {
+	sortKey := kind + ":sort:" + parentId
 	total, err := redis.DB.ZCard(sortKey).Result()
 	if err != nil || total == 0 {
 		return response.ERROR, int(total)
@@ -39,10 +39,10 @@ func getTotalByIdFromRedis(parentId, category string) (int, int) {
 	return response.SUCCESS, int(total)
 }
 
-func getTotalByIdFromMysql(parentId, category string) (int, int) {
+func getTotalByIdFromMysql(parentId, kind string) (int, int) {
 	var total int
 	sql := `SELECT COUNT(*)
-			FROM ` + category + `
+			FROM ` + kind + `
 			WHERE parent_id = ?
 			AND deleted = 0`
 	if err := mysql.DB.Get(&total, sql, parentId); err != nil {
