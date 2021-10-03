@@ -44,43 +44,14 @@ func GetActivityByPage(c *gin.Context) {
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
 	category := c.Query("category")
-	var codeTotal, total, totalPage int
-	codeTotal, total, totalPage = activity.GetTotal(category, pageSize)
-	if codeTotal != response.SUCCESS {
-		response.Response(c, codeTotal, nil)
+	code, activities, page := activity.GetActivitiesByPade(current, pageSize, category)
+	if code != response.SUCCESS {
+		response.Response(c, code, nil)
 		return
 	}
-	var tmpPage = model.Page{
-		Current:   current,
-		PageSize:  pageSize,
-		Total:     total,
-		TotalPage: totalPage,
-	}
-	if current > total {
-		response.Response(c, response.ParamError, nil)
-		return
-	}
-	codeIdsRedis, activityIds := activity.GetActivityIdsByPageFromRedis(current, pageSize, category)
-	if codeIdsRedis != response.SUCCESS {
-		codeMysql, activities := activity.GetActivitiesByPageFromMysql(current, pageSize, category)
-		if codeMysql != response.SUCCESS {
-			response.Response(c, codeMysql, nil)
-			return
-		}
-		response.Response(c, codeMysql, gin.H{
-			"content": activities,
-			"page":    tmpPage,
-		})
-		return
-	}
-	codeActivities, activities := activity.GetActivityByIds(activityIds)
-	if codeActivities != response.SUCCESS {
-		response.Response(c, codeActivities, nil)
-		return
-	}
-	response.Response(c, codeActivities, gin.H{
-		"content": activities,
-		"page":    tmpPage,
+	response.Response(c, code, gin.H{
+		"activities": activities,
+		"page":       page,
 	})
 }
 

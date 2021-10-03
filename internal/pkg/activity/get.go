@@ -1,12 +1,12 @@
 package activity
 
 import (
+	"Moreover/internal/pkg/user"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
 	"encoding/json"
-	"fmt"
 	goRedis "github.com/go-redis/redis"
 )
 
@@ -22,53 +22,38 @@ func GetActivityById(activityId string) (int, model.Activity) {
 	return code, tmpActivity
 }
 
-func GetActivityIdsByPageFromRedis(current, size int, category string) (int, []string) {
-	sortKey := "activity:sort"
-	if category != "" {
-		sortKey = "activity:sort:" + category
-	}
-	rangeOpt := goRedis.ZRangeBy{
-		Min:    "-",
-		Max:    "+",
-		Offset: int64((current - 1) * size),
-		Count:  int64(size),
-	}
-	activitiesId, errRedis := redis.DB.ZRangeByLex(sortKey, rangeOpt).Result()
-	if errRedis != nil {
-		fmt.Printf("get activitiesId from redis fail, err:%v\n", errRedis)
-		return response.ERROR, nil
-	}
-	if len(activitiesId) == 0 {
-		return response.NotFound, nil
-	}
-	return response.SUCCESS, activitiesId
-}
-
-func GetActivitiesByPageFromMysql(current, size int, category string) (int, []model.Activity) {
+func GetActivitiesByPade(current, size int, category string) (int, []model.Activity, model.Page) {
 	var activities []model.Activity
-	if category == "" {
-		sql := `SELECT * FROM activity
-			WHERE deleted = 0
-			ORDER BY update_time
-			LIMIT ? ,?`
-		err := mysql.DB.Select(activities, sql, (current-1)*size, size)
-		if err != nil {
-			fmt.Printf("get activities by page fail, err: %v\n", err)
-			return response.ERROR, nil
+	code, total := GetTotal(category)
+	var tmpPage = model.Page{
+		Current:   current,
+		PageSize:  size,
+		Total:     total,
+		TotalPage: (total / size) + 1,
+	}
+	if code != response.SUCCESS {
+		return code, activities, tmpPage
+	}
+	if (current-1)*size > total {
+		return response.ParamError, activities, tmpPage
+	}
+	codeIdsRedis, activityIds := getActivityIdsByPageFromRedis(current, size, category)
+	if codeIdsRedis != response.SUCCESS || (len(activityIds) == 0 && code == response.SUCCESS) {
+		code, activities = getActivitiesByPageFromMysql(current, size, category)
+		if code == response.SUCCESS {
+			for i := 0; i < len(activities); i++ {
+				PublishActivity(activities[i])
+				_, activities[i].PublisherInfo = user.GetUserInfo(activities[i].Publisher)
+				activities[i].PublisherInfo.Description = ""
+			}
 		}
-		return response.SUCCESS, activities
+		return code, activities, tmpPage
 	}
-	sql := `SELECT * FROM activity
-			WHERE category = ?
-			AND deleted = 0
-			ORDER BY update_time
-			LIMIT ? ,?`
-	err := mysql.DB.Select(activities, sql, category, (current-1)*size, size)
-	if err != nil {
-		fmt.Printf("get activities by page fail, err: %v\n", err)
-		return response.ERROR, nil
+	code, activities = GetActivityByIds(activityIds)
+	if code != response.SUCCESS {
+		return code, activities, tmpPage
 	}
-	return response.SUCCESS, activities
+	return response.SUCCESS, activities, tmpPage
 }
 
 func GetActivityByIds(activityIds []string) (int, []model.Activity) {
@@ -78,6 +63,8 @@ func GetActivityByIds(activityIds []string) (int, []model.Activity) {
 		if tmpRedisCode != response.SUCCESS {
 			return tmpRedisCode, activities
 		}
+		_, tmpRedisActivity.PublisherInfo = user.GetUserInfo(tmpRedisActivity.Publisher)
+		tmpRedisActivity.PublisherInfo.Description = ""
 		activities = append(activities, tmpRedisActivity)
 	}
 	return response.SUCCESS, activities
@@ -91,43 +78,85 @@ func GetPublisherById(activityId string) (int, string) {
 	return response.SUCCESS, activity.Publisher
 }
 
-func GetTotal(category string, size int) (int, int, int) {
-	code, total, totalPage := getTotalFromRedis(category, size)
+func GetTotal(category string) (int, int) {
+	code, total := getTotalFromRedis(category)
 	if code != response.SUCCESS {
-		code, total, totalPage = getTotalFromMysql(category, size)
+		code, total = getTotalFromMysql(category)
 	}
-	return code, total, totalPage
+	return code, total
+}
+
+func getActivityIdsByPageFromRedis(current, size int, category string) (int, []string) {
+	sortKey := "activity:sort"
+	if category != "" {
+		sortKey = "activity:sort:" + category
+	}
+	rangeOpt := goRedis.ZRangeBy{
+		Min:    "-",
+		Max:    "+",
+		Offset: int64((current - 1) * size),
+		Count:  int64(size),
+	}
+	activitiesId, errRedis := redis.DB.ZRangeByLex(sortKey, rangeOpt).Result()
+	if errRedis != nil {
+		return response.ERROR, nil
+	}
+	if len(activitiesId) == 0 {
+		return response.NotFound, nil
+	}
+	return response.SUCCESS, activitiesId
+}
+
+func getActivitiesByPageFromMysql(current, size int, category string) (int, []model.Activity) {
+	var activities []model.Activity
+	if category == "" {
+		sql := `SELECT * FROM activity
+			WHERE deleted = 0
+			ORDER BY update_time
+			LIMIT ? ,?`
+		err := mysql.DB.Select(activities, sql, (current-1)*size, size)
+		if err != nil {
+			return response.ERROR, nil
+		}
+		return response.SUCCESS, activities
+	}
+	sql := `SELECT * FROM activity
+			WHERE category = ?
+			AND deleted = 0
+			ORDER BY update_time
+			LIMIT ? ,?`
+	err := mysql.DB.Select(activities, sql, category, (current-1)*size, size)
+	if err != nil {
+		return response.ERROR, nil
+	}
+	return response.SUCCESS, activities
 }
 
 func getActivityByIdFromRedis(activityId string) (int, model.Activity) {
 	var activity model.Activity
 	activityString, err := redis.DB.Get("activity:id:" + activityId).Result()
 	if err != nil { //err判断
-		fmt.Printf("get activity by id from redis fail, err: %v\n", err)
 		if err == goRedis.Nil {
 			return response.NotFound, activity
 		}
 		return response.ERROR, activity
 	}
 	if err := json.Unmarshal([]byte(activityString), &activity); err != nil {
-		fmt.Printf("activityString to struct fail, err: %v\n", err)
 		return response.ERROR, activity
 	}
 	return response.SUCCESS, activity
 }
 
-func getTotalFromRedis(category string, size int) (int, int, int) {
+func getTotalFromRedis(category string) (int, int) {
 	key := "activity:sort"
 	if category != "" {
 		key = "activity:sort:" + category
 	}
 	total, err := redis.DB.ZCard(key).Result()
 	if err != nil {
-		fmt.Printf("get activity total fail, err %v\n", err)
-		return response.NotFound, 0, 0
+		return response.NotFound, 0
 	}
-	totalPage := int(total)/size + 1
-	return response.SUCCESS, int(total), totalPage
+	return response.SUCCESS, int(total)
 }
 
 func getActivityByIdFromMysql(activityId string) (int, model.Activity) {
@@ -136,33 +165,28 @@ func getActivityByIdFromMysql(activityId string) (int, model.Activity) {
 			WHERE activity_id = ?
 			AND deleted = 0`
 	if err := mysql.DB.Get(&activity, sql, activityId); err != nil {
-		fmt.Printf("get activity by id from mysql fail, err: %v\n", err)
 		return response.ERROR, activity
 	}
 	return response.SUCCESS, activity
 }
 
-func getTotalFromMysql(category string, size int) (int, int, int) {
+func getTotalFromMysql(category string) (int, int) {
 	var total int
 	if category == "" {
 		sql := `SELECT COUNT(*)
 				FROM activity
 				WHERE deleted = 0`
 		if err := mysql.DB.Get(&total, sql); err != nil {
-			fmt.Printf("get activity total from mysql fail, err: %v\n", err)
-			return response.ERROR, 0, 0
+			return response.ERROR, 0
 		}
-		totalPage := total/size + 1
-		return response.SUCCESS, total, totalPage
+		return response.SUCCESS, total
 	}
 	sql := `SELECT COUNT(*)
 			FROM activity
 			WHERE deleted = 0
 			AND category = ?`
-	if err := mysql.DB.Get(&total, sql, category); err != nil {
-		fmt.Printf("get activity total from mysql fail, err: %v\n", err)
-		return response.ERROR, 0, 0
+	if err := mysql.DB.Select(&total, sql, category); err != nil {
+		return response.ERROR, 0
 	}
-	totalPage := total/size + 1
-	return response.SUCCESS, total, totalPage
+	return response.SUCCESS, total
 }

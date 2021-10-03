@@ -4,7 +4,6 @@ import (
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
-	"fmt"
 )
 
 func DeleteCommentById(commentId, stuId string) int {
@@ -29,7 +28,6 @@ func deleteCommentFromRedis(commentId, parentId string) int {
 	pipe.Del(idKey)
 	pipe.ZRem(sortParentKey, commentId)
 	if _, err := pipe.Exec(); err != nil {
-		fmt.Printf("delete activity from redis fail, err: %v\n", err)
 		return response.ERROR
 	}
 	return response.SUCCESS

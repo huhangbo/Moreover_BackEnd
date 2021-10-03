@@ -11,8 +11,8 @@ import (
 )
 
 func PublishComment(c *gin.Context) {
-	stuId, ok := c.Get("stuId")
 	id := c.Param("parentId")
+	stuId, ok := c.Get("stuId")
 	if !ok {
 		response.Response(c, response.AuthError, nil)
 		return

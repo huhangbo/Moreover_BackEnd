@@ -49,8 +49,8 @@ func Init() {
 	}
 	viper.WatchConfig()
 	viper.OnConfigChange(func(in fsnotify.Event) {
-		fmt.Printf("修改配置文件...")
-		if err := viper.Unmarshal(Config); err!= nil {
+		fmt.Printf("修改配置文件中。。。")
+		if err := viper.Unmarshal(Config); err != nil {
 			fmt.Printf("Unmarshell failed, err: %v\n", err)
 		}
 	})

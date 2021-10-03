@@ -32,5 +32,7 @@ func InitRouter(port string) {
 
 	CommentRouter()
 
+	likeRouter()
+
 	panic(Router.Run(port))
 }

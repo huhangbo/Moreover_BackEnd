@@ -14,11 +14,11 @@ import (
 const activityExpiration = time.Hour * 24 * 7
 
 func PublishActivity(activity model.Activity) int {
-	code := publishActivityToRedis(activity)
+	code := publishActivityToMysql(activity)
 	if code != response.SUCCESS {
-		code = publishActivityToMysql(activity)
 		return code
 	}
+	publishActivityToRedis(activity)
 	return code
 }
 
