@@ -6,7 +6,6 @@ import (
 	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
 	"encoding/json"
-	"fmt"
 	goRedis "github.com/go-redis/redis"
 	"time"
 )
@@ -49,7 +48,6 @@ func publishActivityToMysql(activity model.Activity) int {
 	sql := `INSERT INTO activity (create_time, update_time, activity_id, publisher, category, title, outline, start_time, end_time, contact, location, detail) 
 			VALUES (:create_time, :update_time, :activity_id, :publisher, :category, :title, :outline, :start_time, :end_time, :contact, :location, :detail)`
 	if _, err := mysql.DB.NamedExec(sql, activity); err != nil {
-		fmt.Printf("insert activity to mysql fali, err: %v\n", err)
 		return response.ParamError
 	}
 	return response.SUCCESS

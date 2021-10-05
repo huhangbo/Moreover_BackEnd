@@ -26,14 +26,3 @@ func Auth() gin.HandlerFunc {
 		return
 	}
 }
-
-func Verify() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userId := c.Param("userId")
-		stuId, ok := c.Get("stuId")
-		if ok != true || userId != stuId.(string) {
-			response.Response(c, response.AuthError, nil)
-			c.Abort()
-		}
-	}
-}

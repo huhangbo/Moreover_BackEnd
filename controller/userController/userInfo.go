@@ -18,7 +18,11 @@ func GetUserInfoById(c *gin.Context) {
 }
 
 func UpdateAvatar(c *gin.Context) {
-	userId := c.Param("userId")
+	userId, ok := c.Get("stuId")
+	if !ok {
+		response.Response(c, response.AuthError, nil)
+		return
+	}
 	var tmpUserInfo model.UserInfo
 	if err := c.BindJSON(&tmpUserInfo); err != nil {
 		response.Response(c, response.ERROR, nil)
@@ -27,12 +31,16 @@ func UpdateAvatar(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	code := user.UpdateUserAvatar(tmpUserInfo.Avatar, userId)
+	code := user.UpdateUserAvatar(tmpUserInfo.Avatar, userId.(string))
 	response.Response(c, code, nil)
 }
 
 func UpdateSex(c *gin.Context) {
-	userId := c.Param("userId")
+	userId, ok := c.Get("stuId")
+	if !ok {
+		response.Response(c, response.AuthError, nil)
+		return
+	}
 	var tmpUserInfo model.UserInfo
 	if err := c.BindJSON(&tmpUserInfo); err != nil {
 		response.Response(c, response.ERROR, nil)
@@ -41,12 +49,16 @@ func UpdateSex(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	code := user.UpdateUserSex(tmpUserInfo.Sex, userId)
+	code := user.UpdateUserSex(tmpUserInfo.Sex, userId.(string))
 	response.Response(c, code, nil)
 }
 
 func UpdateNickname(c *gin.Context) {
-	userId := c.Param("userId")
+	userId, ok := c.Get("stuId")
+	if !ok {
+		response.Response(c, response.AuthError, nil)
+		return
+	}
 	var tmpUserInfo model.UserInfo
 	if err := c.BindJSON(&tmpUserInfo); err != nil {
 		response.Response(c, response.ERROR, nil)
@@ -55,12 +67,16 @@ func UpdateNickname(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	code := user.UpdateUserNickname(tmpUserInfo.Nickname, userId)
+	code := user.UpdateUserNickname(tmpUserInfo.Nickname, userId.(string))
 	response.Response(c, code, nil)
 }
 
 func UpdateDescription(c *gin.Context) {
-	userId := c.Param("userId")
+	userId, ok := c.Get("stuId")
+	if !ok {
+		response.Response(c, response.AuthError, nil)
+		return
+	}
 	var tmpUserInfo model.UserInfo
 	if err := c.BindJSON(&tmpUserInfo); err != nil {
 		response.Response(c, response.ERROR, nil)
@@ -69,6 +85,6 @@ func UpdateDescription(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	code := user.UpdateUserDescription(tmpUserInfo.Description, userId)
+	code := user.UpdateUserDescription(tmpUserInfo.Description, userId.(string))
 	response.Response(c, code, nil)
 }

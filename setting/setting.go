@@ -9,15 +9,19 @@ import (
 var Config = new(AppConfig)
 
 type AppConfig struct {
-	Name      string `mapstructure:"name"`
-	Mode      string `mapstructure:"mode"`
-	Version   string `mapstructure:"version"`
-	StartTime string `mapstructure:"start_time"`
-	MachineID int64  `mapstructure:"machine_id"`
-	Port      int    `mapstructure:"port"`
-
+	Name         string `mapstructure:"name"`
+	Mode         string `mapstructure:"mode"`
+	Version      string `mapstructure:"version"`
+	StartTime    string `mapstructure:"start_time"`
+	MachineID    int64  `mapstructure:"machine_id"`
+	Port         int    `mapstructure:"port"`
+	*LogConfig   `mapstructure:"log"`
 	*MySQLConfig `mapstructure:"mysql"`
 	*RedisConfig `mapstructure:"redis"`
+}
+
+type LogConfig struct {
+	Path string `mapstructure:"path"`
 }
 
 type MySQLConfig struct {
@@ -49,7 +53,7 @@ func Init() {
 	}
 	viper.WatchConfig()
 	viper.OnConfigChange(func(in fsnotify.Event) {
-		fmt.Printf("修改配置文件中。。。")
+		fmt.Printf("修改配置文件。。。")
 		if err := viper.Unmarshal(Config); err != nil {
 			fmt.Printf("Unmarshell failed, err: %v\n", err)
 		}

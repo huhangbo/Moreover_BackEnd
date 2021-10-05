@@ -14,13 +14,13 @@ func UserRouter() {
 
 		r.GET("/info/:userId", userController.GetUserInfoById)
 
-		r.PATCH("/avatar/:userId", auth.Auth(), auth.Verify(), userController.UpdateAvatar)
+		r.PATCH("/avatar", auth.Auth(), userController.UpdateAvatar)
 
-		r.PATCH("/sex/:userId", auth.Auth(), auth.Verify(), userController.UpdateSex)
+		r.PATCH("/sex", auth.Auth(), userController.UpdateSex)
 
-		r.PATCH("/nickname/:userId", auth.Auth(), auth.Verify(), userController.UpdateNickname)
+		r.PATCH("/nickname", auth.Auth(), userController.UpdateNickname)
 
-		r.PATCH("/description/:userId", auth.Auth(), auth.Verify(), userController.UpdateDescription)
+		r.PATCH("/description", auth.Auth(), userController.UpdateDescription)
 	}
 
 }

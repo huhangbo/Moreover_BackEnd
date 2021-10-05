@@ -1,6 +1,7 @@
 package router
 
 import (
+	"Moreover/setting"
 	"github.com/gin-gonic/gin"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"io"
@@ -10,13 +11,12 @@ import (
 var Router *gin.Engine
 
 func InitRouter(port string) {
-	path := "log/"
+	gin.SetMode(setting.Config.Mode)
+	logPath := setting.Config.LogConfig.Path
 	writer, _ := rotatelogs.New(
-		path+"%Y-%m-%d.log",
-		rotatelogs.WithLinkName(path),
-
+		logPath+"%Y-%m-%d.log",
+		rotatelogs.WithLinkName(logPath),
 		rotatelogs.WithMaxAge(time.Duration(180)*time.Second),
-
 		rotatelogs.WithRotationTime(time.Duration(60)*time.Minute*24),
 	)
 
