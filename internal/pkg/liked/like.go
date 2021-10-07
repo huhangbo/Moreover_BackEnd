@@ -5,7 +5,6 @@ import (
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
-	"encoding/json"
 	goRedis "github.com/go-redis/redis"
 	"time"
 )
@@ -13,31 +12,25 @@ import (
 const timeLikedExpiration = time.Hour * 24 * 7
 
 func PublishLike(like model.Like) int {
-	code := publishLikeToMysql(like)
+	code := publishLikeToRedis(like)
 	if code != response.SUCCESS {
-		code = deleteLikeFromMysql(like.LikeId, 0)
-		if code != response.SUCCESS {
-			return code
-		}
+		return code
 	}
-	code = publishLikeToRedis(like)
+	code = publishLikeToMysql(like)
+	if code != response.SUCCESS {
+		UnLikeFromRedis(like.ParentId, like.LikePublisher)
+	}
 	return code
 }
 
 func publishLikeToRedis(like model.Like) int {
 	publishTime, _ := time.ParseInLocation("2006/01/02 15:05:06", like.UpdateTime, time.Local)
+	sortKey := "liked:sort:" + like.ParentId
 	sortComment := goRedis.Z{
 		Score:  float64(publishTime.Unix()),
-		Member: like.LikeId,
-	}
-	key := "liked:id:" + like.LikeId
-	sortKey := "liked:sort:" + like.ParentId
-	likeJson, err := json.Marshal(like)
-	if err != nil {
-		return response.ERROR
+		Member: like.LikePublisher,
 	}
 	pipe := redis.DB.Pipeline()
-	pipe.Set(key, likeJson, timeLikedExpiration)
 	pipe.ZAdd(sortKey, sortComment)
 	if _, err := pipe.Exec(); err != nil {
 		return response.ERROR
@@ -46,10 +39,11 @@ func publishLikeToRedis(like model.Like) int {
 }
 
 func publishLikeToMysql(like model.Like) int {
-	sql := `INSERT INTO liked (create_time, update_time, like_id, parent_id, like_user, like_publisher, deleted)
-			VALUES (:create_time, :update_time, :like_id, :parent_id, :like_user, :like_publisher, :deleted);`
+	sql := `INSERT INTO liked (create_time, update_time, parent_id, like_user, like_publisher)
+			VALUES (:create_time, :update_time,:parent_id, :like_user, :like_publisher);`
 	if _, err := mysql.DB.NamedExec(sql, like); err != nil {
-		return response.ERROR
+		code := UnLikeFromMysql(like.ParentId, like.LikePublisher, 0)
+		return code
 	}
 	return response.SUCCESS
 }

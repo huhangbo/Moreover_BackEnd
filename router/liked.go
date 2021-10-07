@@ -12,6 +12,6 @@ func likeRouter() {
 
 		r.GET("/:parentId/:current/:pageSize", likeController.GetLikesByPage)
 
-		r.DELETE("/:likeId", auth.Auth(), likeController.DeleteLike)
+		r.DELETE("/:parentId", auth.Auth(), likeController.DeleteLike)
 	}
 }

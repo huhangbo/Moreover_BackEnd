@@ -19,13 +19,13 @@ func PublishComment(c *gin.Context) {
 	}
 	now := time.Now().Format("2006/01/02 15:04:05")
 	var tmpComment = model.Comment{
-		PublishTime: now,
-		UpdateTime:  now,
-		ParentID:    id,
-		Publisher:   stuId.(string),
-		Replier:     c.PostForm("replier"),
-		CommentId:   uuid.New().String(),
-		Message:     c.PostForm("message"),
+		CreateTime: now,
+		UpdateTime: now,
+		ParentID:   id,
+		Publisher:  stuId.(string),
+		Replier:    c.PostForm("replier"),
+		CommentId:  uuid.New().String(),
+		Message:    c.PostForm("message"),
 	}
 	code := comment.PublishComment(tmpComment)
 	response.Response(c, code, nil)
@@ -45,28 +45,28 @@ func DeleteComment(c *gin.Context) {
 func GetCommentsByPage(c *gin.Context) {
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	childCurrent, _ := strconv.Atoi(c.Query("childCurrent"))
 	childSize, _ := strconv.Atoi(c.Query("childSize"))
 	parentId := c.Param("parentId")
-	code, comments, tmpPage := comment.GetCommentsByIdPage(current, pageSize, parentId)
+
+	code, comments, tmpPage := comment.GetCommentByIdPage(current, pageSize, parentId)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
 	}
+	var parentComments []model.ParentComment
 	for i := 0; i < len(comments); i++ {
-		code, childComment, childPage := comment.GetCommentsByIdPage(childCurrent, childSize, comments[i].CommentId)
+		code, childComment := comment.GetPreChildCById(childSize, comments[i].CommentId)
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return
 		}
-		if len(childComment) == 0 {
-			continue
-		}
-		comments[i].Children.Comments = append(comments[i].Children.Comments, childComment...)
-		comments[i].Children.Page = childPage
+		parentComments = append(parentComments, model.ParentComment{
+			CommentDetail: comments[i],
+			Children:      childComment,
+		})
 	}
 	response.Response(c, code, gin.H{
-		"comments": comments,
+		"comments": parentComments,
 		"page":     tmpPage,
 	})
 }

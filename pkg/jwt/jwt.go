@@ -36,7 +36,6 @@ func ParseToken(token string) *Claims {
 		return jwtKey, nil
 	})
 	if err != nil {
-		fmt.Printf("parseToken fail, err: %v\n", err)
 		return nil
 	}
 	if tmpToken != nil {

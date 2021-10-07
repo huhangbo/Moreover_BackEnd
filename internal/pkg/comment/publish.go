@@ -24,7 +24,7 @@ func PublishComment(comment model.Comment) int {
 
 func publishCommentToRedis(comment model.Comment) int {
 	jsonActivity, err := json.Marshal(comment)
-	publishTime, _ := time.ParseInLocation("2006/01/02 15:05:06", comment.PublishTime, time.Local)
+	publishTime, _ := time.ParseInLocation("2006/01/02 15:05:06", comment.CreateTime, time.Local)
 	if err != nil {
 		return response.ERROR
 	}

@@ -34,7 +34,7 @@ func PublishActivity(c *gin.Context) {
 	tmpActivity.ActivityId = uuid.New().String()
 	tmpActivity.Publisher = publisher.(string)
 	now := time.Now().Format("2006/01/02 15:04:05")
-	tmpActivity.PublishTime = now
+	tmpActivity.CreateTime = now
 	tmpActivity.UpdateTime = now
 	code := activity.PublishActivity(tmpActivity)
 	response.Response(c, code, nil)
@@ -74,7 +74,7 @@ func UpdateActivity(c *gin.Context) {
 	}
 	tmpActivity.ActivityId = activityId
 	tmpActivity.UpdateTime = time.Now().Format("2006/01/02 15:04:05")
-	tmpActivity.PublishTime = time.Now().Format("2006/01/02 15:04:05")
+	tmpActivity.CreateTime = time.Now().Format("2006/01/02 15:04:05")
 	tmpActivity.Publisher = stuId.(string)
 	codeUpdate := activity.UpdateActivityById(tmpActivity, oldActivity)
 	response.Response(c, codeUpdate, nil)

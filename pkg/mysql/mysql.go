@@ -10,7 +10,7 @@ import (
 var DB *sqlx.DB
 
 func Init(config *setting.MySQLConfig) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true", config.User, config.Password, config.Host, config.Port, config.DB)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4", config.User, config.Password, config.Host, config.Port, config.DB)
 	var err error
 	DB, err = sqlx.Connect("mysql", dsn)
 	if err != nil {

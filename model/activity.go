@@ -1,7 +1,7 @@
 package model
 
 type Activity struct {
-	PublishTime   string `db:"create_time" json:"publishTime"`
+	CreateTime    string `db:"create_time" json:"createTime"`
 	UpdateTime    string `db:"update_time" json:"updateTime"`
 	ActivityId    string `db:"activity_id" json:"activityId"`
 	Publisher     string `db:"publisher" json:"publisher"`

@@ -1,10 +1,9 @@
 package model
 
-type User struct {
+type Follow struct {
 	CreateTime string `db:"create_time" json:"createTime"`
 	UpdateTime string `db:"update_time" json:"updateTime"`
 	Deleted    int    `db:"deleted" json:"deleted"`
-	StudentID  string `db:"student_id"`
-	UserName   string
-	Password   string
+	Follower   string `db:"follower" json:"follower"`
+	Fan        string `db:"fan" json:"fan"`
 }

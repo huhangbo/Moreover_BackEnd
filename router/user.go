@@ -5,7 +5,7 @@ import (
 	"Moreover/middleware/auth"
 )
 
-func UserRouter() {
+func userRouter() {
 	r := Router.Group("/user")
 	{
 		r.POST("/register", userController.Register)

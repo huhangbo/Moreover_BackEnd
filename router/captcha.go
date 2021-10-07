@@ -4,7 +4,7 @@ import (
 	"Moreover/controller/captchaController"
 )
 
-func CaptchaRouter() {
+func captchaRouter() {
 	r := Router.Group("/captcha")
 	{
 		r.GET("/generate", captchaController.GenerateCaptcha)

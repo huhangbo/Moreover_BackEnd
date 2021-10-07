@@ -5,7 +5,7 @@ import (
 	"Moreover/middleware/auth"
 )
 
-func ActivityRouter() {
+func activityRouter() {
 	r := Router.Group("/activity")
 	{
 		r.GET("/:activityId", activityController.GetActivityById)

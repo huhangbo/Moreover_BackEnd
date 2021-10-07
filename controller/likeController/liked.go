@@ -35,7 +35,6 @@ func PublishLike(c *gin.Context) {
 	tmpLike := model.Like{
 		CreateTime:    now,
 		UpdateTime:    now,
-		LikeId:        stuId.(string) + parentId,
 		ParentId:      parentId,
 		LikeUser:      likeUser,
 		LikePublisher: stuId.(string),
@@ -49,7 +48,7 @@ func GetLikesByPage(c *gin.Context) {
 	parentId := c.Param("parentId")
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	code, likes, page := liked.GetLikesByPage(current, pageSize, parentId)
+	code, likes, page := liked.GetLikeById(current, pageSize, parentId)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -61,13 +60,12 @@ func GetLikesByPage(c *gin.Context) {
 }
 
 func DeleteLike(c *gin.Context) {
-	likeId := c.Param("likeId")
+	parentId := c.Param("parentId")
 	stuId, ok := c.Get("stuId")
-	userId := likeId[:8]
-	if !ok || userId != stuId.(string) {
+	if !ok {
 		response.Response(c, response.AuthError, nil)
 		return
 	}
-	code := liked.DeleteLikeById(likeId, stuId.(string))
+	code := liked.UnLike(parentId, stuId.(string))
 	response.Response(c, code, nil)
 }

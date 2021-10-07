@@ -24,15 +24,17 @@ func InitRouter(port string) {
 
 	Router = gin.Default()
 
-	CaptchaRouter()
+	captchaRouter()
 
-	UserRouter()
+	userRouter()
 
-	ActivityRouter()
+	activityRouter()
 
-	CommentRouter()
+	commentRouter()
 
 	likeRouter()
+
+	followRouter()
 
 	panic(Router.Run(port))
 }

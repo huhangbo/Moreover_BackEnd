@@ -5,7 +5,7 @@ import (
 	"Moreover/middleware/auth"
 )
 
-func CommentRouter() {
+func commentRouter() {
 	r := Router.Group("/comment")
 	{
 		r.POST("/:parentId", auth.Auth(), commentController.PublishComment)

@@ -40,7 +40,7 @@ func updateActivityToMysql(activity model.Activity) int {
 
 func updateActivityToRedis(activity, old model.Activity) int {
 	activityJson, err := json.Marshal(activity)
-	publishTime, _ := time.ParseInLocation("2006/01/02 15:05:06", activity.PublishTime, time.Local)
+	publishTime, _ := time.ParseInLocation("2006/01/02 15:05:06", activity.CreateTime, time.Local)
 	if err != nil {
 		fmt.Printf("activity struct to json fail, err:%v\n", err)
 		return response.ERROR

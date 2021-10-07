@@ -50,25 +50,11 @@ func GetActivitiesByPade(current, size int, category string) (int, []model.Activ
 		}
 		return code, activities, tmpPage
 	}
-	code, activities = GetActivityByIds(activityIds)
+	code, activities = getActivityByIds(activityIds)
 	if code != response.SUCCESS {
 		return code, activities, tmpPage
 	}
 	return response.SUCCESS, activities, tmpPage
-}
-
-func GetActivityByIds(activityIds []string) (int, []model.Activity) {
-	var activities []model.Activity
-	for i := 0; i < len(activityIds); i++ {
-		tmpRedisCode, tmpRedisActivity := GetActivityById(activityIds[i])
-		if tmpRedisCode != response.SUCCESS {
-			return tmpRedisCode, activities
-		}
-		_, tmpRedisActivity.PublisherInfo = user.GetUserInfo(tmpRedisActivity.Publisher)
-		tmpRedisActivity.PublisherInfo.Description = ""
-		activities = append(activities, tmpRedisActivity)
-	}
-	return response.SUCCESS, activities
 }
 
 func GetPublisherById(activityId string) (int, string) {
@@ -85,6 +71,20 @@ func GetTotal(category string) (int, int) {
 		code, total = getTotalFromMysql(category)
 	}
 	return code, total
+}
+
+func getActivityByIds(activityIds []string) (int, []model.Activity) {
+	var activities []model.Activity
+	for i := 0; i < len(activityIds); i++ {
+		tmpRedisCode, tmpRedisActivity := GetActivityById(activityIds[i])
+		if tmpRedisCode != response.SUCCESS {
+			return tmpRedisCode, activities
+		}
+		_, tmpRedisActivity.PublisherInfo = user.GetUserInfo(tmpRedisActivity.Publisher)
+		tmpRedisActivity.PublisherInfo.Description = ""
+		activities = append(activities, tmpRedisActivity)
+	}
+	return response.SUCCESS, activities
 }
 
 func getActivityIdsByPageFromRedis(current, size int, category string) (int, []string) {
