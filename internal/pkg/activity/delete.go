@@ -16,7 +16,7 @@ func DeleteActivityById(activityId, stuId string) int {
 		return response.AuthError
 	}
 	code = deleteActivityFromRedis(activityId, tmpActivity.Category)
-	code = deleteActivityFromMysql(activityId)
+	code = deleteActivityFromMysql(activityId, 1)
 	return code
 }
 
@@ -35,11 +35,11 @@ func deleteActivityFromRedis(activityId, category string) int {
 	return response.SUCCESS
 }
 
-func deleteActivityFromMysql(activityId string) int {
+func deleteActivityFromMysql(activityId string, state int) int {
 	sql := `UPDATE activity
-			SET deleted = 1
+			SET deleted = ?
 			WHERE activity_id = ?`
-	if _, err := mysql.DB.Exec(sql, activityId); err != nil {
+	if _, err := mysql.DB.Exec(sql, activityId, state); err != nil {
 		fmt.Printf("delete activity from mysql fail, err: %v\n", err)
 		return response.ERROR
 	}

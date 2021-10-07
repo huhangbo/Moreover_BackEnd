@@ -14,7 +14,7 @@ type Comment struct {
 
 type CommentDetail struct {
 	Comment
-	PublisherInfo UserInfo
+	PublisherInfo UserBasicInfo
 }
 
 type ChildComment struct {

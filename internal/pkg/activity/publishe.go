@@ -13,11 +13,14 @@ import (
 const activityExpiration = time.Hour * 24 * 7
 
 func PublishActivity(activity model.Activity) int {
-	code := publishActivityToMysql(activity)
+	code := publishActivityToRedis(activity)
 	if code != response.SUCCESS {
 		return code
 	}
-	publishActivityToRedis(activity)
+	code = publishActivityToMysql(activity)
+	if code != response.SUCCESS {
+		deleteActivityFromRedis(activity.ActivityId, activity.Category)
+	}
 	return code
 }
 
@@ -48,7 +51,8 @@ func publishActivityToMysql(activity model.Activity) int {
 	sql := `INSERT INTO activity (create_time, update_time, activity_id, publisher, category, title, outline, start_time, end_time, contact, location, detail) 
 			VALUES (:create_time, :update_time, :activity_id, :publisher, :category, :title, :outline, :start_time, :end_time, :contact, :location, :detail)`
 	if _, err := mysql.DB.NamedExec(sql, activity); err != nil {
-		return response.ParamError
+		code, _ := getActivityByIdFromMysql(activity.ActivityId)
+		return code
 	}
 	return response.SUCCESS
 }

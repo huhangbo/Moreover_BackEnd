@@ -15,5 +15,5 @@ type Activity struct {
 	Deleted       int    `db:"deleted" json:"deleted"`
 	Star          int    `json:"star"`
 	Detail        string `db:"detail" json:"detail"`
-	PublisherInfo UserInfo
+	PublisherInfo UserBasicInfo
 }
