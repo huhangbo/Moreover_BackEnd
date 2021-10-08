@@ -6,7 +6,6 @@ import (
 	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
 	"encoding/json"
-	"fmt"
 	goRedis "github.com/go-redis/redis"
 	"time"
 )
@@ -32,7 +31,6 @@ func updateActivityToMysql(activity model.Activity) int {
 				  SET update_time = :update_time, title = :title, category = :category, outline = :outline, start_time =:start_time, end_time = :end_time, contact = :contact, location = :location, detail = :detail
 				  WHERE activity_id = :activity_id`
 	if _, err := mysql.DB.NamedExec(sqlUpdate, activity); err != nil {
-		fmt.Printf("update activity to mysql fali, err: %v\n", err)
 		return response.ERROR
 	}
 	return response.SUCCESS
@@ -40,16 +38,15 @@ func updateActivityToMysql(activity model.Activity) int {
 
 func updateActivityToRedis(activity, old model.Activity) int {
 	activityJson, err := json.Marshal(activity)
-	publishTime, _ := time.ParseInLocation("2006/01/02 15:04:05", activity.CreateTime, time.Local)
+	updateTime, _ := time.ParseInLocation("2006/01/02 15:04:05", activity.UpdateTime, time.Local)
 	if err != nil {
-		fmt.Printf("activity struct to json fail, err:%v\n", err)
 		return response.ERROR
 	}
 	key := "activity:id:" + activity.ActivityId
 	sortCategoryKey := "activity:sort:" + activity.Category
 	oldSortKey := "activity:sort:" + old.Category
 	sortActivity := goRedis.Z{
-		Score:  float64(publishTime.Unix()),
+		Score:  float64(updateTime.Unix()),
 		Member: activity.ActivityId,
 	}
 	pipe := redis.DB.Pipeline()

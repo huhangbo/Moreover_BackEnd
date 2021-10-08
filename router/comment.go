@@ -8,7 +8,7 @@ import (
 func commentRouter() {
 	r := Router.Group("/comment")
 	{
-		r.POST("/:parentId", auth.Auth(), commentController.PublishComment)
+		r.POST("/:kind/:parentId", auth.Auth(), commentController.PublishComment)
 
 		r.GET("/:parentId/:current/:pageSize", commentController.GetCommentsByPage)
 

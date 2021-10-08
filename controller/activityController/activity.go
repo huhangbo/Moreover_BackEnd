@@ -67,17 +67,21 @@ func UpdateActivity(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	codeOld, oldActivity := activity.GetActivityById(activityId)
-	if codeOld != response.SUCCESS {
-		response.Response(c, codeOld, nil)
+	code, oldActivity := activity.GetActivityById(activityId)
+	if code != response.SUCCESS {
+		response.Response(c, code, nil)
+		return
+	}
+	if oldActivity.Publisher != stuId.(string) {
+		response.Response(c, response.AuthError, nil)
 		return
 	}
 	tmpActivity.ActivityId = activityId
+	tmpActivity.CreateTime = oldActivity.CreateTime
 	tmpActivity.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
-	tmpActivity.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 	tmpActivity.Publisher = stuId.(string)
-	codeUpdate := activity.UpdateActivityById(tmpActivity, oldActivity)
-	response.Response(c, codeUpdate, nil)
+	code = activity.UpdateActivityById(tmpActivity, oldActivity)
+	response.Response(c, code, nil)
 }
 
 func DeleteActivity(c *gin.Context) {

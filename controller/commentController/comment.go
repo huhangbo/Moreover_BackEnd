@@ -1,6 +1,7 @@
 package commentController
 
 import (
+	"Moreover/internal/pkg/activity"
 	"Moreover/internal/pkg/comment"
 	"Moreover/model"
 	"Moreover/pkg/response"
@@ -11,22 +12,41 @@ import (
 )
 
 func PublishComment(c *gin.Context) {
-	id := c.Param("parentId")
 	stuId, ok := c.Get("stuId")
 	if !ok {
 		response.Response(c, response.AuthError, nil)
 		return
 	}
-	now := time.Now().Format("2006-01-02 15:04:05")
-	var tmpComment = model.Comment{
-		CreateTime: now,
-		UpdateTime: now,
-		ParentID:   id,
-		Publisher:  stuId.(string),
-		Replier:    c.PostForm("replier"),
-		CommentId:  uuid.New().String(),
-		Message:    c.PostForm("message"),
+	ParentId := c.Param("parentId")
+	var tmpComment model.Comment
+	var replier string
+	if err := c.BindJSON(&tmpComment); err != nil {
+		response.Response(c, response.ParamError, nil)
+		return
 	}
+	switch c.Param("kind") {
+	case "activity":
+		code, tmpKind := activity.GetActivityById(ParentId)
+		if code != response.SUCCESS {
+			response.Response(c, response.ParamError, nil)
+			return
+		}
+		replier = tmpKind.Publisher
+	case "comment":
+		code, tmpKind := comment.GetCommentById(ParentId)
+		if code != response.SUCCESS {
+			response.Response(c, response.ParamError, nil)
+			return
+		}
+		replier = tmpKind.Publisher
+	}
+	now := time.Now().Format("2006-01-02 15:04:05")
+	tmpComment.CreateTime = now
+	tmpComment.UpdateTime = now
+	tmpComment.ParentID = ParentId
+	tmpComment.Publisher = stuId.(string)
+	tmpComment.Replier = replier
+	tmpComment.CommentId = uuid.New().String()
 	code := comment.PublishComment(tmpComment)
 	response.Response(c, code, nil)
 }

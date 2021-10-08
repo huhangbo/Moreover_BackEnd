@@ -24,7 +24,7 @@ func GetLikeById(current, size int, parentId string) (int, []model.UserBasicInfo
 	if code != response.SUCCESS || len(likes) == 0 {
 		code, likes = getLikeByIdFromMysql(current, size, parentId)
 		if code == response.SUCCESS {
-			SyncLikeMysqlToRedis(parentId)
+			go SyncLikeMysqlToRedis(parentId)
 		}
 		code, tmpBasic = util.GetKindDetail(likes)
 		return code, tmpBasic, tmpPage
