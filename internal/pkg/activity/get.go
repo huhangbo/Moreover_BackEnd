@@ -1,7 +1,6 @@
 package activity
 
 import (
-	"Moreover/internal/pkg/user"
 	"Moreover/internal/util"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
@@ -19,16 +18,13 @@ func GetActivityById(activityId string) (int, model.Activity) {
 			publishActivityToRedis(tmpActivity)
 		}
 	}
-	_, tmpActivity.Star = util.GetTotalById(tmpActivity.ActivityId, "liked")
+	_, tmpActivity.Star = util.GetTotalById(tmpActivity.ActivityId, "liked", "parent_id")
 	return code, tmpActivity
 }
 
 func GetPublisherById(activityId string) (int, string) {
 	code, activity := GetActivityById(activityId)
-	if code != response.SUCCESS {
-		return code, ""
-	}
-	return response.SUCCESS, activity.Publisher
+	return code, activity.Publisher
 }
 
 func GetTotal(category string) (int, int) {
@@ -46,8 +42,6 @@ func getActivityByIds(activityIds []string) (int, []model.Activity) {
 		if tmpRedisCode != response.SUCCESS {
 			return tmpRedisCode, activities
 		}
-		_, tmp := user.GetUserInfo(tmpRedisActivity.Publisher)
-		tmpRedisActivity.PublisherInfo = tmp.UserBasicInfo
 		activities = append(activities, tmpRedisActivity)
 	}
 	return response.SUCCESS, activities
@@ -56,7 +50,7 @@ func getActivityByIds(activityIds []string) (int, []model.Activity) {
 func getActivityByIdFromRedis(activityId string) (int, model.Activity) {
 	var activity model.Activity
 	activityString, err := redis.DB.Get("activity:id:" + activityId).Result()
-	if err != nil { //err判断
+	if err != nil {
 		if err == goRedis.Nil {
 			return response.NotFound, activity
 		}
@@ -73,9 +67,9 @@ func getTotalFromRedis(category string) (int, int) {
 	if category != "" {
 		key = "activity:sort:" + category
 	}
-	total, err := redis.DB.ZCard(key).Result()
-	if err != nil {
-		return response.NotFound, 0
+	total, _ := redis.DB.ZCard(key).Result()
+	if total == 0 {
+		return response.NotFound, int(total)
 	}
 	return response.SUCCESS, int(total)
 }
@@ -106,8 +100,8 @@ func getTotalFromMysql(category string) (int, int) {
 			FROM activity
 			WHERE deleted = 0
 			AND category = ?`
-	if err := mysql.DB.Select(&total, sql, category); err != nil {
-		return response.ERROR, 0
+	if err := mysql.DB.Get(&total, sql, category); err != nil {
+		return response.ERROR, total
 	}
 	return response.SUCCESS, total
 }

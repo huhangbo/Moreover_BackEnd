@@ -18,7 +18,7 @@ func GetCommentById(commentId string) (int, model.Comment) {
 			publishCommentToRedis(comment)
 		}
 	}
-	_, comment.Star = util.GetTotalById(comment.CommentId, "likes")
+	_, comment.Star = util.GetTotalById(comment.CommentId, "likes", "parent_id")
 	return code, comment
 }
 

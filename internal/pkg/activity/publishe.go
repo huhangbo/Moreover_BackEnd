@@ -26,13 +26,13 @@ func PublishActivity(activity model.Activity) int {
 
 func publishActivityToRedis(activity model.Activity) int {
 	jsonActivity, err := json.Marshal(activity)
-	publishTime, _ := time.ParseInLocation("2006/01/02 15:05:06", activity.CreateTime, time.Local)
+	publishTime, _ := time.ParseInLocation("2006-01-02 15:04:05", activity.CreateTime, time.Local)
 	if err != nil {
 		return response.ERROR
 	}
 	activityKey := "activity:id:" + activity.ActivityId
 	sortCategoryKey := "activity:sort:" + activity.Category
-	sortKey := "activity:sort"
+	sortKey := "activity:sort:"
 	sortActivity := goRedis.Z{
 		Score:  float64(publishTime.Unix()),
 		Member: activity.ActivityId,

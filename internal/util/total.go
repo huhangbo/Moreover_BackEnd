@@ -7,10 +7,10 @@ import (
 	goRedis "github.com/go-redis/redis"
 )
 
-func GetTotalById(parentId, kind string) (int, int) {
+func GetTotalById(parentId, kind, parent string) (int, int) {
 	code, total := getTotalByIdFromRedis(parentId, kind)
 	if code != response.SUCCESS {
-		code, total = getTotalByIdFromMysql(parentId, kind)
+		code, total = getTotalByIdFromMysql(parentId, kind, parent)
 	}
 	return code, total
 }
@@ -39,11 +39,11 @@ func getTotalByIdFromRedis(parentId, kind string) (int, int) {
 	return response.SUCCESS, int(total)
 }
 
-func getTotalByIdFromMysql(parentId, kind string) (int, int) {
+func getTotalByIdFromMysql(parentId, kind, parent string) (int, int) {
 	var total int
 	sql := `SELECT COUNT(*)
 			FROM ` + kind + `
-			WHERE parent_id = ?
+			WHERE ` + parent + ` = ?
 			AND deleted = 0`
 	if err := mysql.DB.Get(&total, sql, parentId); err != nil {
 		return response.ERROR, total

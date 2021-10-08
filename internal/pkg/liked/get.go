@@ -8,7 +8,7 @@ import (
 )
 
 func GetLikeById(current, size int, parentId string) (int, []model.UserBasicInfo, model.Page) {
-	code, total := util.GetTotalById(parentId, "liked")
+	code, total := util.GetTotalById(parentId, "liked", "parent_id")
 	var tmpBasic []model.UserBasicInfo
 	var likes []string
 	tmpPage := model.Page{

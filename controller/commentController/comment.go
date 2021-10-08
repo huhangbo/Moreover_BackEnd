@@ -17,7 +17,7 @@ func PublishComment(c *gin.Context) {
 		response.Response(c, response.AuthError, nil)
 		return
 	}
-	now := time.Now().Format("2006/01/02 15:04:05")
+	now := time.Now().Format("2006-01-02 15:04:05")
 	var tmpComment = model.Comment{
 		CreateTime: now,
 		UpdateTime: now,

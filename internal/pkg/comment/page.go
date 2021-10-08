@@ -9,7 +9,7 @@ import (
 )
 
 func GetCommentByIdPage(current, size int, commentId string) (int, []model.CommentDetail, model.Page) {
-	_, totalComment := util.GetTotalById(commentId, "comment")
+	_, totalComment := util.GetTotalById(commentId, "comment", "parent_id")
 	var comments []model.CommentDetail
 	var tmpPage = model.Page{
 		Current:   current,

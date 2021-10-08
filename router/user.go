@@ -22,5 +22,4 @@ func userRouter() {
 
 		r.PATCH("/description", auth.Auth(), userController.UpdateDescription)
 	}
-
 }

@@ -50,16 +50,3 @@ func getUserInfoFromMysql(stuId string) (int, model.UserInfo) {
 	}
 	return response.SUCCESS, userInfo
 }
-
-//func GetUserBasic(stuId string) (int, model.UserBasicInfo) {
-//	var userInfo model.UserInfo
-//	key := "user:id:" + stuId
-//	userInfoString, err := redis.DB.Get(key).Result()
-//	if err != nil {
-//		return response.ERROR, userInfo.UserBasicInfo
-//	}
-//	if err := json.Unmarshal([]byte(userInfoString), &userInfo); err != nil {
-//		return response.ERROR, userInfo.UserBasicInfo
-//	}
-//	return response.SUCCESS, userInfo.UserBasicInfo
-//}

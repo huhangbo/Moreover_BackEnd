@@ -24,7 +24,7 @@ func PublishLike(like model.Like) int {
 }
 
 func publishLikeToRedis(like model.Like) int {
-	publishTime, _ := time.ParseInLocation("2006/01/02 15:05:06", like.UpdateTime, time.Local)
+	publishTime, _ := time.ParseInLocation("2006-01-02 15:04:05", like.UpdateTime, time.Local)
 	sortKey := "liked:sort:" + like.ParentId
 	sortComment := goRedis.Z{
 		Score:  float64(publishTime.Unix()),

@@ -31,7 +31,7 @@ func PublishLike(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	now := time.Now().Format("2006/01/02 15:04:05")
+	now := time.Now().Format("2006-01-02 15:04:05")
 	tmpLike := model.Like{
 		CreateTime:    now,
 		UpdateTime:    now,

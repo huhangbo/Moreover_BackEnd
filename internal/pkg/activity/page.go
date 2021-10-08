@@ -9,8 +9,10 @@ import (
 	goRedis "github.com/go-redis/redis"
 )
 
-func GetActivitiesByPade(current, size int, category string) (int, []model.Activity, model.Page) {
-	var activities []model.Activity
+func GetActivitiesByPade(current, size int, category string) (int, []model.ActivityPageShow, model.Page) {
+	var activities []model.ActivityPageShow
+	var tmpActivities []model.Activity
+	var activityIds []string
 	code, total := GetTotal(category)
 	var tmpPage = model.Page{
 		Current:   current,
@@ -24,21 +26,20 @@ func GetActivitiesByPade(current, size int, category string) (int, []model.Activ
 	if (current-1)*size > total {
 		return response.ParamError, activities, tmpPage
 	}
-	codeIdsRedis, activityIds := getActivityIdsByPageFromRedis(current, size, category)
-	if codeIdsRedis != response.SUCCESS || (len(activityIds) == 0 && code == response.SUCCESS) {
-		code, activities = getActivitiesByPageFromMysql(current, size, category)
+	code, activityIds = getActivityIdsByPageFromRedis(current, size, category)
+	code, tmpActivities = getActivityByIds(activityIds)
+	if code != response.SUCCESS || (len(activityIds) == 0 && code == response.SUCCESS) {
+		code, tmpActivities = getActivitiesByPageFromMysql(current, size, category)
 		if code == response.SUCCESS {
-			for i := 0; i < len(activities); i++ {
-				PublishActivity(activities[i])
-				_, tmp := user.GetUserInfo(activities[i].Publisher)
-				activities[i].PublisherInfo = tmp.UserBasicInfo
-			}
+			go SyncActivitySortRedisMysql()
 		}
-		return code, activities, tmpPage
 	}
-	code, activities = getActivityByIds(activityIds)
-	if code != response.SUCCESS {
-		return code, activities, tmpPage
+	for i := 0; i < len(tmpActivities); i++ {
+		var tmpPageShow model.ActivityPageShow
+		_, tmpUser := user.GetUserInfo(tmpActivities[i].Publisher)
+		tmpPageShow.ActivityBasic = tmpActivities[i].ActivityBasic
+		tmpPageShow.PublisherInfo = tmpUser.UserBasicInfo
+		activities = append(activities, tmpPageShow)
 	}
 	return response.SUCCESS, activities, tmpPage
 }

@@ -22,7 +22,7 @@ func PublishFollow(follow model.Follow) int {
 }
 
 func PublishFollowToRedis(follow model.Follow) int {
-	publishTime, _ := time.ParseInLocation("2006/01/02 15:05:06", follow.UpdateTime, time.Local)
+	publishTime, _ := time.ParseInLocation("2006/01/02 15:04:05", follow.UpdateTime, time.Local)
 	keyFan := "fan:sort:" + follow.Follower
 	keyFollow := "follower:sort:" + follow.Fan
 	sortFan := goRedis.Z{

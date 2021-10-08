@@ -8,7 +8,7 @@ import (
 )
 
 func GetFollowById(current, size int, follower, followType string) (int, []model.UserBasicInfo, model.Page) {
-	code, total := util.GetTotalById(follower, followType)
+	code, total := util.GetTotalById(follower, "follow", followType)
 	var tmpBasic []model.UserBasicInfo
 	var follows []string
 	tmpPage := model.Page{
@@ -24,7 +24,7 @@ func GetFollowById(current, size int, follower, followType string) (int, []model
 	if code != response.SUCCESS || len(follows) == 0 {
 		code, follows = GetFollowByIdFromMysql(current, size, follower, followType)
 		if code == response.SUCCESS {
-			SyncFollowMysqlToRedis(follower, followType)
+			go SyncFollowMysqlToRedis(follower, followType)
 		}
 		code, tmpBasic = util.GetKindDetail(follows)
 		return code, tmpBasic, tmpPage
