@@ -1,7 +1,6 @@
 package comment
 
 import (
-	"Moreover/internal/util"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/redis"
@@ -18,7 +17,6 @@ func GetCommentById(commentId string) (int, model.Comment) {
 			publishCommentToRedis(comment)
 		}
 	}
-	_, comment.Star = util.GetTotalById(comment.CommentId, "likes", "parent_id")
 	return code, comment
 }
 

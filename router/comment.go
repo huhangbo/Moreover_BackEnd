@@ -7,12 +7,13 @@ import (
 
 func commentRouter() {
 	r := Router.Group("/comment")
+	r.Use(auth.Auth())
 	{
-		r.POST("/:kind/:parentId", auth.Auth(), commentController.PublishComment)
+		r.POST("/:kind/:parentId", commentController.PublishComment)
 
 		r.GET("/:parentId/:current/:pageSize", commentController.GetCommentsByPage)
 
-		r.DELETE("/:commentId", auth.Auth(), commentController.DeleteComment)
+		r.DELETE("/:commentId", commentController.DeleteComment)
 
 	}
 }

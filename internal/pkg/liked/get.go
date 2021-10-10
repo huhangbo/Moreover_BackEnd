@@ -1,6 +1,7 @@
 package liked
 
 import (
+	"Moreover/internal/pkg/user"
 	"Moreover/internal/util"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
@@ -26,10 +27,10 @@ func GetLikeById(current, size int, parentId string) (int, []model.UserBasicInfo
 		if code == response.SUCCESS {
 			go SyncLikeMysqlToRedis(parentId)
 		}
-		code, tmpBasic = util.GetKindDetail(likes)
+		code, tmpBasic = user.GetKindDetail(likes)
 		return code, tmpBasic, tmpPage
 	}
-	code, tmpBasic = util.GetKindDetail(likes)
+	code, tmpBasic = user.GetKindDetail(likes)
 	return code, tmpBasic, tmpPage
 }
 

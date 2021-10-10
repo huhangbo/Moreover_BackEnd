@@ -8,13 +8,18 @@ import (
 )
 
 func GetUserInfoById(c *gin.Context) {
+	stuId, ok := c.Get("stuId")
+	if !ok {
+		response.Response(c, response.AuthError, nil)
+		return
+	}
 	userId := c.Param("userId")
-	code, userInfo := user.GetUserInfo(userId)
+	code, userInfoDetail := user.GetUserInfoDetail(userId, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
 	}
-	response.Response(c, code, gin.H{"userInfo": userInfo})
+	response.Response(c, code, gin.H{"userInfo": userInfoDetail})
 }
 
 func UpdateAvatar(c *gin.Context) {

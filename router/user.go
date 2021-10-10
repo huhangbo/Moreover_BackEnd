@@ -12,7 +12,7 @@ func userRouter() {
 
 		r.POST("/login", userController.Login)
 
-		r.GET("/info/:userId", userController.GetUserInfoById)
+		r.GET("/info/:userId", auth.Auth(), userController.GetUserInfoById)
 
 		r.PATCH("/avatar", auth.Auth(), userController.UpdateAvatar)
 

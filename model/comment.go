@@ -8,13 +8,15 @@ type Comment struct {
 	ParentID   string `db:"parent_id" json:"parentId"`
 	Publisher  string `db:"publisher" json:"publisher"`
 	Replier    string `db:"replier"   json:"replier"`
-	Star       int    `json:"star"`
-	Message    string `db:"message" json:"message"`
+
+	Message string `db:"message" json:"message"`
 }
 
 type CommentDetail struct {
 	Comment
 	PublisherInfo UserBasicInfo
+	Star          int  `json:"star"`
+	IsStart       bool `json:"isStart"`
 }
 
 type ChildComment struct {

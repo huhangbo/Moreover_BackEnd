@@ -8,7 +8,7 @@ import (
 	"Moreover/pkg/response"
 )
 
-func GetCommentByIdPage(current, size int, commentId string) (int, []model.CommentDetail, model.Page) {
+func GetCommentByIdPage(current, size int, commentId, stuId string) (int, []model.CommentDetail, model.Page) {
 	_, totalComment := util.GetTotalById(commentId, "comment", "parent_id")
 	var comments []model.CommentDetail
 	var tmpPage = model.Page{
@@ -43,16 +43,18 @@ func GetCommentByIdPage(current, size int, commentId string) (int, []model.Comme
 		}
 		_, tmpUser := user.GetUserInfo(tmpComment.Publisher)
 		tmpComment.PublisherInfo = tmpUser.UserBasicInfo
+		_, tmpComment.Star = util.GetTotalById(commentId, "likes", "parent_id")
+		tmpComment.IsStart = util.IsPublished(commentId, "likes", "parent_id", "like_publisher", stuId)
 		comments = append(comments, tmpComment)
 	}
 	return response.SUCCESS, comments, tmpPage
 }
 
-func GetPreChildCById(size int, commentId string) (int, model.ChildComment) {
+func GetPreChildCById(size int, commentId, stuId string) (int, model.ChildComment) {
 	var code int
 	var children model.ChildComment
 	var page model.Page
-	code, children.Comments, page = GetCommentByIdPage(1, size, commentId)
+	code, children.Comments, page = GetCommentByIdPage(1, size, commentId, stuId)
 	children.Total = page.Total
 	if code != response.SUCCESS {
 		return code, children

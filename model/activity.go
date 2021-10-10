@@ -10,7 +10,6 @@ type ActivityBasic struct {
 	Outline    string `db:"outline" json:"outline"`
 	StartTime  string `db:"start_time" json:"startTime"`
 	EndTime    string `db:"end_time" json:"endTime"`
-	Star       int    `json:"star"`
 	Location   string `db:"location" json:"location"`
 	Deleted    int    `db:"deleted" json:"deleted"`
 }
@@ -20,7 +19,16 @@ type Activity struct {
 	Detail  string `db:"detail" json:"detail"`
 	Contact string `db:"contact" json:"contact"`
 }
+
+type ActivityDetail struct {
+	Activity
+	Star   int  `json:"star"`
+	IsStar bool `json:"isStar"`
+}
+
 type ActivityPageShow struct {
 	ActivityBasic
 	PublisherInfo UserBasicInfo
+	Star          int  `json:"star"`
+	IsStar        bool `json:"isStar"`
 }

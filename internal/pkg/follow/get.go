@@ -1,6 +1,7 @@
 package follow
 
 import (
+	"Moreover/internal/pkg/user"
 	"Moreover/internal/util"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
@@ -26,10 +27,10 @@ func GetFollowById(current, size int, follower, followType string) (int, []model
 		if code == response.SUCCESS {
 			go SyncFollowMysqlToRedis(follower, followType)
 		}
-		code, tmpBasic = util.GetKindDetail(follows)
+		code, tmpBasic = user.GetKindDetail(follows)
 		return code, tmpBasic, tmpPage
 	}
-	code, tmpBasic = util.GetKindDetail(follows)
+	code, tmpBasic = user.GetKindDetail(follows)
 	return code, tmpBasic, tmpPage
 }
 

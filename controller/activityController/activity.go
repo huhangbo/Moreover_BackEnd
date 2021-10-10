@@ -11,8 +11,13 @@ import (
 )
 
 func GetActivityById(c *gin.Context) {
+	stuId, ok := c.Get("stuId")
+	if !ok {
+		response.Response(c, response.AuthError, nil)
+		return
+	}
 	activityId := c.Param("activityId")
-	code, tmpActivity := activity.GetActivityById(activityId)
+	code, tmpActivity := activity.GetActivityDetailById(activityId, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -41,10 +46,15 @@ func PublishActivity(c *gin.Context) {
 }
 
 func GetActivityByPage(c *gin.Context) {
+	stuId, ok := c.Get("stuId")
+	if !ok {
+		response.Response(c, response.AuthError, nil)
+		return
+	}
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
 	category := c.Query("category")
-	code, activities, page := activity.GetActivitiesByPade(current, pageSize, category)
+	code, activities, page := activity.GetActivitiesByPade(current, pageSize, category, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -52,6 +62,25 @@ func GetActivityByPage(c *gin.Context) {
 	response.Response(c, code, gin.H{
 		"activities": activities,
 		"page":       page,
+	})
+}
+
+func GetActivitiesByPublisher(c *gin.Context) {
+	stuId, ok := c.Get("stuId")
+	if !ok {
+		response.Response(c, response.AuthError, nil)
+		return
+	}
+	current, _ := strconv.Atoi(c.Param("current"))
+	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
+	code, tmpActivities, tmpPage := activity.GetActivityPublishedFromMysql(current, pageSize, stuId.(string))
+	if code != response.SUCCESS {
+		response.Response(c, code, nil)
+		return
+	}
+	response.Response(c, code, gin.H{
+		"activities": tmpActivities,
+		"page":       tmpPage,
 	})
 }
 

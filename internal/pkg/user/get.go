@@ -1,6 +1,7 @@
 package user
 
 import (
+	"Moreover/internal/util"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/redis"
@@ -27,6 +28,21 @@ func GetUserInfo(stuId string) (int, model.UserInfo) {
 	return code, userInfo
 }
 
+func GetUserInfoDetail(stuId, publisher string) (int, model.UserInfoDetail) {
+	var tmpUserDetail model.UserInfoDetail
+	code, userInfo := GetUserInfo(stuId)
+	if code != response.SUCCESS {
+		return code, tmpUserDetail
+	}
+	_, totalFollower := util.GetTotalById(stuId, "follow", "follower")
+	_, totalFan := util.GetTotalById(stuId, "follow", "fan")
+	tmpUserDetail.UserInfo = userInfo
+	tmpUserDetail.Follower = totalFollower
+	tmpUserDetail.Fan = totalFan
+	tmpUserDetail.IsFollow = util.IsPublished(stuId, "follow", "follower", "fan", publisher)
+	return response.SUCCESS, tmpUserDetail
+}
+
 func getUserInfoFromRedis(stuId string) (int, model.UserInfo) {
 	var userInfo model.UserInfo
 	key := "user:id:" + stuId
@@ -49,4 +65,16 @@ func getUserInfoFromMysql(stuId string) (int, model.UserInfo) {
 		return response.ERROR, userInfo
 	}
 	return response.SUCCESS, userInfo
+}
+
+func GetKindDetail(likes []string) (int, []model.UserBasicInfo) {
+	var likesDetail []model.UserBasicInfo
+	for _, item := range likes {
+		code, tmp := GetUserInfo(item)
+		if code != response.SUCCESS {
+			return code, likesDetail
+		}
+		likesDetail = append(likesDetail, tmp.UserBasicInfo)
+	}
+	return response.SUCCESS, likesDetail
 }

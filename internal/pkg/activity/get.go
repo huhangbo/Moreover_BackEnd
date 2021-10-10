@@ -18,8 +18,19 @@ func GetActivityById(activityId string) (int, model.Activity) {
 			publishActivityToRedis(tmpActivity)
 		}
 	}
-	_, tmpActivity.Star = util.GetTotalById(tmpActivity.ActivityId, "liked", "parent_id")
 	return code, tmpActivity
+}
+
+func GetActivityDetailById(activityId, stuId string) (int, model.ActivityDetail) {
+	var tmpActivityDetail model.ActivityDetail
+	code, tmpActivity := GetActivityById(activityId)
+	tmpActivityDetail.Activity = tmpActivity
+	if code != response.SUCCESS {
+		return code, tmpActivityDetail
+	}
+	_, tmpActivityDetail.Star = util.GetTotalById(activityId, "liked", "parent_id")
+	tmpActivityDetail.IsStar = util.IsPublished(activityId, "liked", "parent_id", "like_publisher", stuId)
+	return response.SUCCESS, tmpActivityDetail
 }
 
 func GetPublisherById(activityId string) (int, string) {
@@ -30,7 +41,7 @@ func GetPublisherById(activityId string) (int, string) {
 func GetTotal(category string) (int, int) {
 	code, total := getTotalFromRedis(category)
 	if code != response.SUCCESS {
-		code, total = getTotalFromMysql(category)
+		code, total = getTotalFromMysql(category, "category")
 	}
 	return code, total
 }
@@ -85,7 +96,7 @@ func getActivityByIdFromMysql(activityId string) (int, model.Activity) {
 	return response.SUCCESS, activity
 }
 
-func getTotalFromMysql(category string) (int, int) {
+func getTotalFromMysql(category, publishType string) (int, int) {
 	var total int
 	if category == "" {
 		sql := `SELECT COUNT(*)
@@ -99,7 +110,7 @@ func getTotalFromMysql(category string) (int, int) {
 	sql := `SELECT COUNT(*)
 			FROM activity
 			WHERE deleted = 0
-			AND category = ?`
+			AND ` + publishType + ` = ?`
 	if err := mysql.DB.Get(&total, sql, category); err != nil {
 		return response.ERROR, total
 	}

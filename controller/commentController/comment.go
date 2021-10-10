@@ -67,15 +67,19 @@ func GetCommentsByPage(c *gin.Context) {
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
 	childSize, _ := strconv.Atoi(c.Query("childSize"))
 	parentId := c.Param("parentId")
-
-	code, comments, tmpPage := comment.GetCommentByIdPage(current, pageSize, parentId)
+	stuId, ok := c.Get("stuId")
+	if !ok {
+		response.Response(c, response.AuthError, nil)
+		return
+	}
+	code, comments, tmpPage := comment.GetCommentByIdPage(current, pageSize, parentId, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
 	}
 	var parentComments []model.ParentComment
 	for i := 0; i < len(comments); i++ {
-		code, childComment := comment.GetPreChildCById(childSize, comments[i].CommentId)
+		code, childComment := comment.GetPreChildCById(childSize, comments[i].CommentId, stuId.(string))
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return
