@@ -1,10 +1,10 @@
-package commentController
+package controller
 
 import (
-	"Moreover/internal/pkg/activity"
-	"Moreover/internal/pkg/comment"
 	"Moreover/model"
 	"Moreover/pkg/response"
+	"Moreover/service/activity"
+	comment2 "Moreover/service/comment"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"strconv"
@@ -33,7 +33,7 @@ func PublishComment(c *gin.Context) {
 		}
 		replier = tmpKind.Publisher
 	case "comment":
-		code, tmpKind := comment.GetCommentById(ParentId)
+		code, tmpKind := comment2.GetCommentById(ParentId)
 		if code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
@@ -47,7 +47,7 @@ func PublishComment(c *gin.Context) {
 	tmpComment.Publisher = stuId.(string)
 	tmpComment.Replier = replier
 	tmpComment.CommentId = uuid.New().String()
-	code := comment.PublishComment(tmpComment)
+	code := comment2.PublishComment(tmpComment)
 	response.Response(c, code, nil)
 }
 
@@ -58,7 +58,7 @@ func DeleteComment(c *gin.Context) {
 		return
 	}
 	commentId := c.Param("commentId")
-	code := comment.DeleteCommentById(commentId, stuId.(string))
+	code := comment2.DeleteCommentById(commentId, stuId.(string))
 	response.Response(c, code, nil)
 }
 
@@ -72,14 +72,14 @@ func GetCommentsByPage(c *gin.Context) {
 		response.Response(c, response.AuthError, nil)
 		return
 	}
-	code, comments, tmpPage := comment.GetCommentByIdPage(current, pageSize, parentId, stuId.(string))
+	code, comments, tmpPage := comment2.GetCommentByIdPage(current, pageSize, parentId, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
 	}
 	var parentComments []model.ParentComment
 	for i := 0; i < len(comments); i++ {
-		code, childComment := comment.GetPreChildCById(childSize, comments[i].CommentId, stuId.(string))
+		code, childComment := comment2.GetPreChildCById(childSize, comments[i].CommentId, stuId.(string))
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return

@@ -1,11 +1,11 @@
 package activity
 
 import (
-	"Moreover/internal/util"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
+	"Moreover/service/util"
 	"encoding/json"
 	goRedis "github.com/go-redis/redis"
 )

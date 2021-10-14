@@ -1,11 +1,12 @@
 package comment
 
 import (
-	"Moreover/internal/pkg/user"
-	"Moreover/internal/util"
+	"Moreover/dao"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/response"
+	"Moreover/service/user"
+	"Moreover/service/util"
 )
 
 func GetCommentByIdPage(current, size int, commentId, stuId string) (int, []model.CommentDetail, model.Page) {
@@ -29,8 +30,11 @@ func GetCommentByIdPage(current, size int, commentId, stuId string) (int, []mode
 		if code == response.SUCCESS {
 			for i := 0; i < len(comments); i++ {
 				publishCommentToRedis(comments[i].Comment)
-				_, tmpUser := user.GetUserInfo(comments[i].Publisher)
-				comments[i].PublisherInfo = tmpUser.UserBasicInfo
+				tmpUserBasic := dao.UserInfoBasic{
+					StudentId: comments[i].Publisher,
+				}
+				user.GetUserInfoBasic(&tmpUserBasic)
+				comments[i].PublisherInfo = tmpUserBasic
 			}
 		}
 		return code, comments, tmpPage
@@ -41,8 +45,11 @@ func GetCommentByIdPage(current, size int, commentId, stuId string) (int, []mode
 		if code != response.SUCCESS {
 			return code, comments, tmpPage
 		}
-		_, tmpUser := user.GetUserInfo(tmpComment.Publisher)
-		tmpComment.PublisherInfo = tmpUser.UserBasicInfo
+		tmpUserBasic := dao.UserInfoBasic{
+			StudentId: tmpComment.Publisher,
+		}
+		user.GetUserInfoBasic(&tmpUserBasic)
+		tmpComment.PublisherInfo = tmpUserBasic
 		_, tmpComment.Star = util.GetTotalById(commentId, "likes", "parent_id")
 		tmpComment.IsStart = util.IsPublished(commentId, "likes", "parent_id", "like_publisher", stuId)
 		comments = append(comments, tmpComment)

@@ -1,11 +1,11 @@
-package likeController
+package controller
 
 import (
-	"Moreover/internal/pkg/activity"
-	"Moreover/internal/pkg/comment"
-	"Moreover/internal/pkg/liked"
 	"Moreover/model"
 	"Moreover/pkg/response"
+	"Moreover/service/activity"
+	"Moreover/service/comment"
+	liked2 "Moreover/service/liked"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
@@ -40,7 +40,7 @@ func PublishLike(c *gin.Context) {
 		LikePublisher: stuId.(string),
 		Deleted:       0,
 	}
-	code := liked.PublishLike(tmpLike)
+	code := liked2.PublishLike(tmpLike)
 	response.Response(c, code, nil)
 }
 
@@ -48,7 +48,7 @@ func GetLikesByPage(c *gin.Context) {
 	parentId := c.Param("parentId")
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	code, likes, page := liked.GetLikeById(current, pageSize, parentId)
+	code, likes, page := liked2.GetLikeById(current, pageSize, parentId)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -66,6 +66,6 @@ func DeleteLike(c *gin.Context) {
 		response.Response(c, response.AuthError, nil)
 		return
 	}
-	code := liked.UnLike(parentId, stuId.(string))
+	code := liked2.UnLike(parentId, stuId.(string))
 	response.Response(c, code, nil)
 }

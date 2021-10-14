@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Moreover/connent"
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/redis"
 	"Moreover/router"
@@ -11,6 +12,7 @@ import (
 func main() {
 	setting.Init()
 	mysql.Init(setting.Config.MySQLConfig)
+	connent.InitMysql(setting.Config.MySQLConfig)
 	defer mysql.Close()
 	redis.Init(setting.Config.RedisConfig)
 	defer redis.Close()

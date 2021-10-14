@@ -1,9 +1,9 @@
-package followController
+package controller
 
 import (
-	"Moreover/internal/pkg/follow"
 	"Moreover/model"
 	"Moreover/pkg/response"
+	follow2 "Moreover/service/follow"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
@@ -23,7 +23,7 @@ func Follow(c *gin.Context) {
 		Fan:        stuId.(string),
 		Follower:   follower,
 	}
-	code := follow.PublishFollow(tmpFollow)
+	code := follow2.PublishFollow(tmpFollow)
 	response.Response(c, code, nil)
 }
 
@@ -34,7 +34,7 @@ func UnFollow(c *gin.Context) {
 		return
 	}
 	follower := c.Param("follower")
-	code := follow.Unfollow(follower, stuId.(string))
+	code := follow2.Unfollow(follower, stuId.(string))
 	response.Response(c, code, nil)
 }
 
@@ -43,7 +43,7 @@ func GetFollowByPage(c *gin.Context) {
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
 	followType := c.Param("followType")
 	id := c.Param("id")
-	code, follows, tmpPage := follow.GetFollowById(current, pageSize, id, followType)
+	code, follows, tmpPage := follow2.GetFollowById(current, pageSize, id, followType)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return

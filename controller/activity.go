@@ -1,9 +1,9 @@
-package activityController
+package controller
 
 import (
-	"Moreover/internal/pkg/activity"
 	"Moreover/model"
 	"Moreover/pkg/response"
+	activity2 "Moreover/service/activity"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"strconv"
@@ -17,7 +17,7 @@ func GetActivityById(c *gin.Context) {
 		return
 	}
 	activityId := c.Param("activityId")
-	code, tmpActivity := activity.GetActivityDetailById(activityId, stuId.(string))
+	code, tmpActivity := activity2.GetActivityDetailById(activityId, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -41,7 +41,7 @@ func PublishActivity(c *gin.Context) {
 	now := time.Now().Format("2006-01-02 15:04:05")
 	tmpActivity.CreateTime = now
 	tmpActivity.UpdateTime = now
-	code := activity.PublishActivity(tmpActivity)
+	code := activity2.PublishActivity(tmpActivity)
 	response.Response(c, code, nil)
 }
 
@@ -54,7 +54,7 @@ func GetActivityByPage(c *gin.Context) {
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
 	category := c.Query("category")
-	code, activities, page := activity.GetActivitiesByPade(current, pageSize, category, stuId.(string))
+	code, activities, page := activity2.GetActivitiesByPade(current, pageSize, category, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -73,7 +73,7 @@ func GetActivitiesByPublisher(c *gin.Context) {
 	}
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	code, tmpActivities, tmpPage := activity.GetActivityPublishedFromMysql(current, pageSize, stuId.(string))
+	code, tmpActivities, tmpPage := activity2.GetActivityPublishedFromMysql(current, pageSize, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -96,7 +96,7 @@ func UpdateActivity(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	code, oldActivity := activity.GetActivityById(activityId)
+	code, oldActivity := activity2.GetActivityById(activityId)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -109,7 +109,7 @@ func UpdateActivity(c *gin.Context) {
 	tmpActivity.CreateTime = oldActivity.CreateTime
 	tmpActivity.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 	tmpActivity.Publisher = stuId.(string)
-	code = activity.UpdateActivityById(tmpActivity, oldActivity)
+	code = activity2.UpdateActivityById(tmpActivity, oldActivity)
 	response.Response(c, code, nil)
 }
 
@@ -120,6 +120,6 @@ func DeleteActivity(c *gin.Context) {
 		return
 	}
 	activityId := c.Param("activityId")
-	code := activity.DeleteActivityById(activityId, stuId.(string))
+	code := activity2.DeleteActivityById(activityId, stuId.(string))
 	response.Response(c, code, nil)
 }

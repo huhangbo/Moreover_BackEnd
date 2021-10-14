@@ -1,12 +1,13 @@
 package activity
 
 import (
-	"Moreover/internal/pkg/user"
-	"Moreover/internal/util"
+	"Moreover/dao"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
+	"Moreover/service/user"
+	"Moreover/service/util"
 	goRedis "github.com/go-redis/redis"
 )
 
@@ -37,9 +38,10 @@ func GetActivitiesByPade(current, size int, category, stuId string) (int, []mode
 	}
 	for i := 0; i < len(tmpActivities); i++ {
 		var tmpPageShow model.ActivityPageShow
-		_, tmpUser := user.GetUserInfo(tmpActivities[i].Publisher)
+		var tmpUserBasic dao.UserInfoBasic
+		user.GetUserInfoBasic(&tmpUserBasic)
 		tmpPageShow.ActivityBasic = tmpActivities[i].ActivityBasic
-		tmpPageShow.PublisherInfo = tmpUser.UserBasicInfo
+		tmpPageShow.PublisherInfo = tmpUserBasic
 		_, tmpPageShow.Star = util.GetTotalById(tmpActivities[i].ActivityId, "liked", "parent_id")
 		tmpPageShow.IsStar = util.IsPublished(tmpActivities[i].ActivityId, "liked", "parent_id", "like_publisher", stuId)
 		activities = append(activities, tmpPageShow)
@@ -112,9 +114,10 @@ func GetActivityPublishedFromMysql(current, size int, stuId string) (int, []mode
 	}
 	for i := 0; i < len(tmpActivities); i++ {
 		var tmpPageShow model.ActivityPageShow
-		_, tmpUser := user.GetUserInfo(tmpActivities[i].Publisher)
+		var tmpUserBasic dao.UserInfoBasic
+		user.GetUserInfoBasic(&tmpUserBasic)
 		tmpPageShow.ActivityBasic = tmpActivities[i].ActivityBasic
-		tmpPageShow.PublisherInfo = tmpUser.UserBasicInfo
+		tmpPageShow.PublisherInfo = tmpUserBasic
 		_, tmpPageShow.Star = util.GetTotalById(tmpActivities[i].ActivityId, "liked", "parent_id")
 		tmpPageShow.IsStar = util.IsPublished(tmpActivities[i].ActivityId, "liked", "parent_id", "like_publisher", stuId)
 		tmpActivitiesPageShow = append(tmpActivitiesPageShow, tmpPageShow)

@@ -1,5 +1,7 @@
 package model
 
+import "Moreover/dao"
+
 type ActivityBasic struct {
 	CreateTime string `db:"create_time" json:"createTime"`
 	UpdateTime string `db:"update_time" json:"updateTime"`
@@ -28,7 +30,7 @@ type ActivityDetail struct {
 
 type ActivityPageShow struct {
 	ActivityBasic
-	PublisherInfo UserBasicInfo
+	PublisherInfo dao.UserInfoBasic
 	Star          int  `json:"star"`
 	IsStar        bool `json:"isStar"`
 }

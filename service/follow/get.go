@@ -1,16 +1,17 @@
 package follow
 
 import (
-	"Moreover/internal/pkg/user"
-	"Moreover/internal/util"
+	"Moreover/dao"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/response"
+	"Moreover/service/user"
+	"Moreover/service/util"
 )
 
-func GetFollowById(current, size int, follower, followType string) (int, []model.UserBasicInfo, model.Page) {
+func GetFollowById(current, size int, follower, followType string) (int, []dao.UserInfoBasic, model.Page) {
 	code, total := util.GetTotalById(follower, "follow", followType)
-	var tmpBasic []model.UserBasicInfo
+	var tmpBasic []dao.UserInfoBasic
 	var follows []string
 	tmpPage := model.Page{
 		Current:   current,

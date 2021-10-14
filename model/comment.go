@@ -1,5 +1,7 @@
 package model
 
+import "Moreover/dao"
+
 type Comment struct {
 	CreateTime string `db:"create_time" json:"createTime"`
 	UpdateTime string `db:"update_time" json:"updateTime"`
@@ -14,7 +16,7 @@ type Comment struct {
 
 type CommentDetail struct {
 	Comment
-	PublisherInfo UserBasicInfo
+	PublisherInfo dao.UserInfoBasic
 	Star          int  `json:"star"`
 	IsStart       bool `json:"isStart"`
 }

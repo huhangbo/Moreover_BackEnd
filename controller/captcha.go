@@ -1,9 +1,9 @@
-package captchaController
+package controller
 
 import (
-	"Moreover/internal/pkg/captcha"
 	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
+	"Moreover/service/captcha"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

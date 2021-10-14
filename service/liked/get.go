@@ -1,16 +1,17 @@
 package liked
 
 import (
-	"Moreover/internal/pkg/user"
-	"Moreover/internal/util"
+	"Moreover/dao"
 	"Moreover/model"
 	"Moreover/pkg/mysql"
 	"Moreover/pkg/response"
+	"Moreover/service/user"
+	"Moreover/service/util"
 )
 
-func GetLikeById(current, size int, parentId string) (int, []model.UserBasicInfo, model.Page) {
+func GetLikeById(current, size int, parentId string) (int, []dao.UserInfoBasic, model.Page) {
 	code, total := util.GetTotalById(parentId, "liked", "parent_id")
-	var tmpBasic []model.UserBasicInfo
+	var tmpBasic []dao.UserInfoBasic
 	var likes []string
 	tmpPage := model.Page{
 		Current:   current,

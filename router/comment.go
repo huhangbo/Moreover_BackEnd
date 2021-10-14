@@ -1,7 +1,7 @@
 package router
 
 import (
-	"Moreover/controller/commentController"
+	"Moreover/controller"
 	"Moreover/middleware/auth"
 )
 
@@ -9,11 +9,11 @@ func commentRouter() {
 	r := Router.Group("/comment")
 	r.Use(auth.Auth())
 	{
-		r.POST("/:kind/:parentId", commentController.PublishComment)
+		r.POST("/:kind/:parentId", controller.PublishComment)
 
-		r.GET("/:parentId/:current/:pageSize", commentController.GetCommentsByPage)
+		r.GET("/:parentId/:current/:pageSize", controller.GetCommentsByPage)
 
-		r.DELETE("/:commentId", commentController.DeleteComment)
+		r.DELETE("/:commentId", controller.DeleteComment)
 
 	}
 }
