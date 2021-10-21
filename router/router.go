@@ -31,5 +31,7 @@ func InitRouter(port string) {
 
 	followRouter()
 
+	PostRouter()
+
 	panic(Router.Run(port))
 }

@@ -8,9 +8,9 @@ import (
 func followRouter() {
 	r := Router.Group("/follow")
 	{
-		r.POST("/:follower", auth.Auth(), controller.Follow)
+		r.POST("/:parentId", auth.Auth(), controller.Follow)
 
-		r.DELETE("/:follower", auth.Auth(), controller.UnFollow)
+		r.DELETE("/:parentId", auth.Auth(), controller.UnFollow)
 
 		r.GET("/:followType/:id/:current/:pageSize", controller.GetFollowByPage)
 

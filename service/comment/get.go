@@ -1,46 +1,31 @@
 package comment
 
 import (
-	"Moreover/model"
-	"Moreover/pkg/mysql"
-	"Moreover/pkg/redis"
+	"Moreover/conn"
+	"Moreover/dao"
 	"Moreover/pkg/response"
 	"encoding/json"
-	"fmt"
 )
 
-func GetCommentById(commentId string) (int, model.Comment) {
-	code, comment := getCommentByIdFromRedis(commentId)
+func GetCommentById(comment *dao.Comment) int {
+	code := getCommentByIdFromRedis(comment)
 	if code != response.SUCCESS {
-		code, comment = getCommentByIdFromMysql(commentId)
-		if code == response.SUCCESS {
-			publishCommentToRedis(comment)
+		if err := conn.MySQL.Where("comment_id = ?", comment.CommentId).First(comment).Error; err != nil {
+			return response.FAIL
 		}
+		publishCommentToRedis(*comment)
+		return response.SUCCESS
 	}
-	return code, comment
+	return code
 }
 
-func getCommentByIdFromRedis(commentId string) (int, model.Comment) {
-	var comment model.Comment
-	idKey := "comment:id:" + commentId
-	commentString, err := redis.DB.Get(idKey).Result()
-	if err != nil {
-		return response.ParamError, comment
+func getCommentByIdFromRedis(comment *dao.Comment) int {
+	commentString, err := conn.Redis.Get("comment:id:" + (*comment).CommentId).Result()
+	if err != nil || commentString == "" {
+		return response.FAIL
 	}
-	if err := json.Unmarshal([]byte(commentString), &comment); err != nil {
-		return response.ERROR, comment
+	if err := json.Unmarshal([]byte(commentString), comment); err != nil {
+		return response.ERROR
 	}
-	return response.SUCCESS, comment
-}
-
-func getCommentByIdFromMysql(commentId string) (int, model.Comment) {
-	var comment model.Comment
-	sql := `SELECT * FROM comment
-			WHERE comment_id = ?
-			AND deleted = 0`
-	if err := mysql.DB.Get(&comment, sql, commentId); err != nil {
-		fmt.Printf("get activity by id from mysql fail, err: %v\n", err)
-		return response.ERROR, comment
-	}
-	return response.SUCCESS, comment
+	return response.SUCCESS
 }

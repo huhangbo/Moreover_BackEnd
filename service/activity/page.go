@@ -1,19 +1,19 @@
 package activity
 
 import (
+	"Moreover/conn"
 	"Moreover/dao"
 	"Moreover/model"
-	"Moreover/pkg/mysql"
-	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
+	"Moreover/service/liked"
 	"Moreover/service/user"
-	"Moreover/service/util"
-	goRedis "github.com/go-redis/redis"
+	"github.com/go-redis/redis"
+	"time"
 )
 
-func GetActivitiesByPade(current, size int, category, stuId string) (int, []model.ActivityPageShow, model.Page) {
-	var activities []model.ActivityPageShow
-	var tmpActivities []model.Activity
+func GetActivitiesByPade(current, size int, category, stuId string) (int, []dao.ActivityBasic, model.Page) {
+	var activities []dao.ActivityBasic
+	var tmpActivities []dao.Activity
 	var activityIds []string
 	code, total := GetTotal(category)
 	var tmpPage = model.Page{
@@ -22,105 +22,101 @@ func GetActivitiesByPade(current, size int, category, stuId string) (int, []mode
 		Total:     total,
 		TotalPage: (total / size) + 1,
 	}
-	if code != response.SUCCESS {
-		return code, activities, tmpPage
-	}
-	if (current-1)*size > total {
+	if code != response.SUCCESS || (current-1)*size > total {
 		return response.ParamError, activities, tmpPage
 	}
 	code, activityIds = getActivityIdsByPageFromRedis(current, size, category)
 	code, tmpActivities = getActivityByIds(activityIds)
 	if code != response.SUCCESS || (len(activityIds) == 0 && code == response.SUCCESS) {
-		code, tmpActivities = getActivitiesByPageFromMysql(current, size, category, "category")
-		if code == response.SUCCESS {
-			go SyncActivitySortRedisMysql()
+		if err := conn.MySQL.Limit(size).Offset((current - 1) * size).Find(&tmpActivities).Error; err != nil {
+			return response.FAIL, activities, tmpPage
 		}
 	}
 	for i := 0; i < len(tmpActivities); i++ {
-		var tmpPageShow model.ActivityPageShow
-		var tmpUserBasic dao.UserInfoBasic
-		user.GetUserInfoBasic(&tmpUserBasic)
-		tmpPageShow.ActivityBasic = tmpActivities[i].ActivityBasic
-		tmpPageShow.PublisherInfo = tmpUserBasic
-		_, tmpPageShow.Star = util.GetTotalById(tmpActivities[i].ActivityId, "liked", "parent_id")
-		tmpPageShow.IsStar = util.IsPublished(tmpActivities[i].ActivityId, "liked", "parent_id", "like_publisher", stuId)
-		activities = append(activities, tmpPageShow)
+		tmpActivityBasic := getActivityBasicByActivity(tmpActivities[i], stuId)
+		activities = append(activities, tmpActivityBasic)
 	}
 	return response.SUCCESS, activities, tmpPage
 }
 
+func getActivityBasicByActivity(activity dao.Activity, stuId string) dao.ActivityBasic {
+	tmpBasic := dao.ActivityBasic{
+		CreatedAt:  activity.CreatedAt,
+		UpdatedAt:  activity.UpdatedAt,
+		ActivityId: activity.ActivityId,
+		Publisher:  activity.Publisher,
+		Category:   activity.Category,
+		Title:      activity.Title,
+		Outline:    activity.Outline,
+		StartTime:  activity.StartTime,
+		EndTime:    activity.EndTime,
+		Location:   activity.Location,
+		PublisherInfo: dao.UserInfoBasic{
+			StudentId: activity.Publisher,
+		},
+	}
+	user.GetUserInfoBasic(&(tmpBasic.PublisherInfo))
+	_, tmpBasic.Star, tmpBasic.IsStar = liked.GetTotalAndLiked(tmpBasic.ActivityId, stuId)
+	return tmpBasic
+}
+
 func getActivityIdsByPageFromRedis(current, size int, category string) (int, []string) {
-	sortKey := "activity:sort"
+	sortKey := "activity:sort:"
 	if category != "" {
 		sortKey = "activity:sort:" + category
 	}
-	rangeOpt := goRedis.ZRangeBy{
-		Min:    "-",
-		Max:    "+",
-		Offset: int64((current - 1) * size),
-		Count:  int64(size),
-	}
-	activitiesId, errRedis := redis.DB.ZRangeByLex(sortKey, rangeOpt).Result()
-	if errRedis != nil {
+	activitiesId, err := conn.Redis.ZRevRange(sortKey, int64((current-1)*size), int64(current*size)).Result()
+	if err != nil {
 		return response.ERROR, nil
-	}
-	if len(activitiesId) == 0 {
-		return response.NotFound, nil
 	}
 	return response.SUCCESS, activitiesId
 }
 
-func getActivitiesByPageFromMysql(current, size int, category, publishType string) (int, []model.Activity) {
-	var activities []model.Activity
-	if category == "" {
-		sql := `SELECT * FROM activity
-			WHERE deleted = 0
-			ORDER BY update_time DESC 
-			LIMIT ? ,?`
-		err := mysql.DB.Select(&activities, sql, (current-1)*size, size)
-		if err != nil {
-			return response.ERROR, nil
-		}
-		return response.SUCCESS, activities
-	}
-	sql := `SELECT * FROM activity
-			WHERE ` + publishType + ` = ?
-			AND deleted = 0
-			ORDER BY update_time DESC 
-			LIMIT ? ,?`
-	err := mysql.DB.Select(&activities, sql, category, (current-1)*size, size)
-	if err != nil {
-		return response.ERROR, nil
-	}
-	return response.SUCCESS, activities
-}
-
-func GetActivityPublishedFromMysql(current, size int, stuId string) (int, []model.ActivityPageShow, model.Page) {
-	var tmpActivitiesPageShow []model.ActivityPageShow
-	_, total := getTotalFromMysql(stuId, "publisher")
-	var tmpPage = model.Page{
+func GetActivitiesByPublisher(current, size int, stuId string) (int, []dao.ActivityBasic, model.Page) {
+	var tmpActivitiesBasic []dao.ActivityBasic
+	key := "activity:publisher:" + stuId
+	total, _ := conn.Redis.ZCard(key).Result()
+	tmpPage := model.Page{
 		Current:   current,
 		PageSize:  size,
-		Total:     total,
-		TotalPage: (total / size) + 1,
+		Total:     int(total),
+		TotalPage: (int(total) / size) + 1,
 	}
-	if (current-1)*size > total {
-		return response.ParamError, tmpActivitiesPageShow, tmpPage
+	if total == 0 {
+		if !publisherActivityRedis(stuId) {
+			return response.SUCCESS, tmpActivitiesBasic, tmpPage
+		}
+		total, _ = conn.Redis.ZCard(key).Result()
 	}
-
-	code, tmpActivities := getActivitiesByPageFromMysql(current, size, stuId, "publisher")
+	tmpPage.Total = int(total)
+	tmpPage.TotalPage = (int(total) / size) + 1
+	if (current-1)*size > int(total) {
+		return response.ParamError, tmpActivitiesBasic, tmpPage
+	}
+	activityIds, _ := conn.Redis.ZRevRange(key, int64((current-1)*size), int64(current*size)).Result()
+	code, tmpActivities := getActivityByIds(activityIds)
 	if code != response.SUCCESS {
-		return code, tmpActivitiesPageShow, tmpPage
+		return code, tmpActivitiesBasic, tmpPage
 	}
 	for i := 0; i < len(tmpActivities); i++ {
-		var tmpPageShow model.ActivityPageShow
-		var tmpUserBasic dao.UserInfoBasic
-		user.GetUserInfoBasic(&tmpUserBasic)
-		tmpPageShow.ActivityBasic = tmpActivities[i].ActivityBasic
-		tmpPageShow.PublisherInfo = tmpUserBasic
-		_, tmpPageShow.Star = util.GetTotalById(tmpActivities[i].ActivityId, "liked", "parent_id")
-		tmpPageShow.IsStar = util.IsPublished(tmpActivities[i].ActivityId, "liked", "parent_id", "like_publisher", stuId)
-		tmpActivitiesPageShow = append(tmpActivitiesPageShow, tmpPageShow)
+		tmpActivityBasic := getActivityBasicByActivity(tmpActivities[i], stuId)
+		tmpActivitiesBasic = append(tmpActivitiesBasic, tmpActivityBasic)
 	}
-	return response.SUCCESS, tmpActivitiesPageShow, tmpPage
+	return response.SUCCESS, tmpActivitiesBasic, tmpPage
+}
+
+func publisherActivityRedis(stuId string) bool {
+	var tmpActivities []dao.Activity
+	conn.MySQL.Select("activity_id, created_at").Where("publisher = ?", stuId).Find(&tmpActivities)
+	key := "activity:publisher:" + stuId
+	pipe := conn.Redis.Pipeline()
+	for _, item := range tmpActivities {
+		pipe.ZAdd(key, redis.Z{Member: item, Score: float64(item.CreatedAt.Unix())})
+	}
+	pipe.Expire(key, time.Minute*5)
+
+	if _, err := pipe.Exec(); err != nil || len(tmpActivities) == 0 {
+		return false
+	}
+	return true
 }

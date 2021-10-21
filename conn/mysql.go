@@ -1,4 +1,4 @@
-package connent
+package conn
 
 import (
 	"Moreover/setting"

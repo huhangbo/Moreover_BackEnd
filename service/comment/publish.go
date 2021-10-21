@@ -1,55 +1,31 @@
 package comment
 
 import (
-	"Moreover/model"
-	"Moreover/pkg/mysql"
-	"Moreover/pkg/redis"
+	"Moreover/conn"
+	"Moreover/dao"
 	"Moreover/pkg/response"
+	"Moreover/service/util"
 	"encoding/json"
-	goRedis "github.com/go-redis/redis"
 	"time"
-
-	"fmt"
 )
 
 const commentExpiration = time.Hour * 24 * 7
 
-func PublishComment(comment model.Comment) int {
-	code := publishCommentToMysql(comment)
-	if code != response.SUCCESS {
-		return code
+func PublishComment(comment dao.Comment) int {
+	if err := conn.MySQL.Create(&comment).Error; err != nil {
+		return response.FAIL
 	}
-	return publishCommentToRedis(comment)
-}
-
-func publishCommentToRedis(comment model.Comment) int {
-	jsonActivity, err := json.Marshal(comment)
-	publishTime, _ := time.ParseInLocation("2006-01-02 15:04:05", comment.CreateTime, time.Local)
-	if err != nil {
-		return response.ERROR
-	}
-	sortComment := goRedis.Z{
-		Score:  float64(publishTime.Unix()),
-		Member: comment.CommentId,
-	}
-	idKey := "comment:id:" + comment.CommentId
-	sortKey := "comment:sort:" + comment.ParentID
-	pipe := redis.DB.Pipeline()
-	pipe.ZAdd(sortKey, sortComment)
-	pipe.Set(idKey, string(jsonActivity), commentExpiration)
-	if _, err := pipe.Exec(); err != nil {
-		fmt.Printf("insert comment to redis fail, err: %v\n", err)
-		return response.ERROR
+	if !util.PublishSortRedis(comment.CommentId, float64(time.Now().Unix()), "comment:sort:"+comment.ParentId) {
+		return response.FAIL
 	}
 	return response.SUCCESS
 }
 
-func publishCommentToMysql(comment model.Comment) int {
-	sql := `INSERT INTO comment (create_time, update_time, comment_id, publisher, replier, parent_id, message)
-			VALUES (:create_time, :update_time, :comment_id, :publisher, :replier, :parent_id, :message)`
-	if _, err := mysql.DB.NamedExec(sql, comment); err != nil {
-		fmt.Printf("insert comment to mysql fail, err: %v\n", err)
-		return response.ERROR
+func publishCommentToRedis(comment dao.Comment) int {
+	jsonActivity, _ := json.Marshal(comment)
+	key := "comment:id:" + comment.CommentId
+	if err := conn.Redis.Set(key, string(jsonActivity), commentExpiration); err != nil {
+		return response.FAIL
 	}
 	return response.SUCCESS
 }

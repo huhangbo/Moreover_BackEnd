@@ -11,7 +11,7 @@ func commentRouter() {
 	{
 		r.POST("/:kind/:parentId", controller.PublishComment)
 
-		r.GET("/:parentId/:current/:pageSize", controller.GetCommentsByPage)
+		r.GET("/:kind/:parentId/:current/:pageSize", controller.GetCommentsByPage)
 
 		r.DELETE("/:commentId", controller.DeleteComment)
 

@@ -1,46 +1,43 @@
 package controller
 
 import (
-	"Moreover/model"
+	"Moreover/dao"
 	"Moreover/pkg/response"
 	"Moreover/service/activity"
 	"Moreover/service/comment"
-	liked2 "Moreover/service/liked"
+	"Moreover/service/liked"
 	"github.com/gin-gonic/gin"
 	"strconv"
-	"time"
 )
 
 func PublishLike(c *gin.Context) {
 	parentId := c.Param("parentId")
-	stuId, ok := c.Get("stuId")
-	kind := c.Query("kind")
+	stuId, _ := c.Get("stuId")
+	kind := c.Param("kind")
 	var likeUser string
-	if !ok {
-		response.Response(c, response.AuthError, nil)
-		return
-	}
 	switch kind {
 	case "activity":
-		_, tmp := activity.GetActivityById(parentId)
+		tmp := dao.Activity{
+			ActivityId: parentId,
+		}
+		activity.GetActivityById(&tmp)
 		likeUser = tmp.Publisher
 	case "comment":
-		_, tmp := comment.GetCommentById(parentId)
+		tmp := dao.Comment{
+			CommentId: parentId,
+		}
+		comment.GetCommentById(&tmp)
 		likeUser = tmp.Publisher
 	default:
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	now := time.Now().Format("2006-01-02 15:04:05")
-	tmpLike := model.Like{
-		CreateTime:    now,
-		UpdateTime:    now,
-		ParentId:      parentId,
-		LikeUser:      likeUser,
-		LikePublisher: stuId.(string),
-		Deleted:       0,
+	tmpLike := dao.Liked{
+		ParentId:  parentId,
+		LikeUser:  likeUser,
+		Publisher: stuId.(string),
 	}
-	code := liked2.PublishLike(tmpLike)
+	code := liked.PublishLike(tmpLike)
 	response.Response(c, code, nil)
 }
 
@@ -48,7 +45,7 @@ func GetLikesByPage(c *gin.Context) {
 	parentId := c.Param("parentId")
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	code, likes, page := liked2.GetLikeById(current, pageSize, parentId)
+	code, likes, page := liked.GetLikeByPage(current, pageSize, parentId)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -61,11 +58,11 @@ func GetLikesByPage(c *gin.Context) {
 
 func DeleteLike(c *gin.Context) {
 	parentId := c.Param("parentId")
-	stuId, ok := c.Get("stuId")
-	if !ok {
-		response.Response(c, response.AuthError, nil)
-		return
+	stuId, _ := c.Get("stuId")
+	tmpLiked := dao.Liked{
+		ParentId:  parentId,
+		Publisher: stuId.(string),
 	}
-	code := liked2.UnLike(parentId, stuId.(string))
+	code := liked.UnLike(tmpLiked)
 	response.Response(c, code, nil)
 }

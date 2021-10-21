@@ -1,4 +1,4 @@
-package redis
+package conn
 
 import (
 	"Moreover/setting"
@@ -6,30 +6,25 @@ import (
 	"github.com/go-redis/redis"
 )
 
-var DB *redis.Client
+var Redis *redis.Client
 
-func Init(config *setting.RedisConfig) {
-	DB = redis.NewClient(&redis.Options{
+func InitRedis(config *setting.RedisConfig) {
+	Redis = redis.NewClient(&redis.Options{
 		Addr:         fmt.Sprintf("%s:%d", config.Host, config.Port),
 		Password:     config.Password,
-		DB:           config.DB, // use default DB
+		DB:           config.DB,
 		PoolSize:     config.PoolSize,
 		MinIdleConns: config.MinIdleConns,
 	})
-	if _, err := DB.Ping().Result(); err != nil {
-		fmt.Printf("Connect redis failed, err: %v\n", err)
+	if _, err := Redis.Ping().Result(); err != nil {
 		panic(err)
 	}
 
 }
 
 func Close() {
-	err := DB.Close()
+	err := Redis.Close()
 	if err != nil {
 		fmt.Printf("MySQL close failed, err: %v\n", err)
 	}
-}
-
-func AddStructToHash() {
-
 }

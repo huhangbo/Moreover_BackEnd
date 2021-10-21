@@ -8,10 +8,10 @@ import (
 func likeRouter() {
 	r := Router.Group("/liked")
 	{
-		r.POST("/:parentId", auth.Auth(), controller.PublishLike)
+		r.POST("/:kind/:parentId", auth.Auth(), controller.PublishLike)
 
 		r.GET("/:parentId/:current/:pageSize", controller.GetLikesByPage)
 
-		r.DELETE("/:parentId", auth.Auth(), controller.DeleteLike)
+		r.DELETE("/:kind/:parentId", auth.Auth(), controller.DeleteLike)
 	}
 }

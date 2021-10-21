@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"Moreover/pkg/redis"
+	"Moreover/conn"
 	"Moreover/pkg/response"
 	"Moreover/service/captcha"
 	"fmt"
@@ -19,7 +19,7 @@ func GenerateCaptcha(c *gin.Context) {
 		return
 	}
 	uid = uuid.New()
-	redis.DB.Set("captcha:"+uid.String(), id, time.Minute*5)
+	conn.Redis.Set("captcha:"+uid.String(), id, time.Minute*5)
 	response.Response(c, response.SUCCESS, gin.H{
 		"id":     id,
 		"base64": base64,
@@ -28,7 +28,7 @@ func GenerateCaptcha(c *gin.Context) {
 
 func ParseCaptcha(c *gin.Context) {
 	requestId := c.PostForm("captcha")
-	id, err := redis.DB.Get("captcha:" + uid.String()).Result()
+	id, err := conn.Redis.Get("captcha:" + uid.String()).Result()
 	if err != nil {
 		fmt.Printf("parse captch from redis fail, err: %v\n", err)
 		response.Response(c, response.ERROR, nil)

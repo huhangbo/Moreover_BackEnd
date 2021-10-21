@@ -1,83 +1,70 @@
 package comment
 
 import (
+	"Moreover/conn"
 	"Moreover/dao"
 	"Moreover/model"
-	"Moreover/pkg/mysql"
 	"Moreover/pkg/response"
+	"Moreover/service/liked"
 	"Moreover/service/user"
 	"Moreover/service/util"
 )
 
-func GetCommentByIdPage(current, size int, commentId, stuId string) (int, []model.CommentDetail, model.Page) {
-	_, totalComment := util.GetTotalById(commentId, "comment", "parent_id")
-	var comments []model.CommentDetail
+func GetCommentByIdPage(current, size int, commentId, stuId string) (int, []dao.CommentDetail, model.Page) {
+	code, total := util.GetTotalById(commentId, "comment", "parent_id")
+	if code == response.NotFound {
+		SyncCommentSortRedis(commentId)
+	}
+	var commentsDetail []dao.CommentDetail
+	var commentIds []string
 	var tmpPage = model.Page{
 		Current:   current,
 		PageSize:  size,
-		Total:     totalComment,
-		TotalPage: (totalComment / size) + 1,
+		Total:     total,
+		TotalPage: (total / size) + 1,
 	}
-	if totalComment == 0 {
-		return response.SUCCESS, comments, tmpPage
+	if total == 0 {
+		return response.SUCCESS, commentsDetail, tmpPage
 	}
-	if (current-1)*size > totalComment {
-		return response.ParamError, comments, tmpPage
+	if (current-1)*size > total {
+		return response.ParamError, commentsDetail, tmpPage
 	}
-	code, ids := util.GetIdsByPageFromRedis(current, size, commentId, "comment")
-	if code != response.SUCCESS || (len(ids) == 0 && code == 200) {
-		code, comments = getCommentsByPageFromMysql(current, size, commentId)
-		if code == response.SUCCESS {
-			for i := 0; i < len(comments); i++ {
-				publishCommentToRedis(comments[i].Comment)
-				tmpUserBasic := dao.UserInfoBasic{
-					StudentId: comments[i].Publisher,
-				}
-				user.GetUserInfoBasic(&tmpUserBasic)
-				comments[i].PublisherInfo = tmpUserBasic
-			}
+	code, commentIds = util.GetIdsByPageFromRedis(current, size, commentId, "comment")
+	if code != response.SUCCESS || (len(commentIds) == 0 && code == 200) {
+		conn.MySQL.Model(&dao.Comment{}).Select("comment_id").Where("parent_id = ?", commentId).Limit(size).Offset((current - 1) * size).Find(&commentIds)
+	}
+	for i := 0; i < len(commentIds); i++ {
+		tmpCommentDetail := dao.CommentDetail{
+			Comment: dao.Comment{
+				CommentId: commentIds[i],
+			},
 		}
-		return code, comments, tmpPage
-	}
-	for i := 0; i < len(ids); i++ {
-		var tmpComment model.CommentDetail
-		code, tmpComment.Comment = GetCommentById(ids[i])
+		code = GetCommentById(&(tmpCommentDetail.Comment))
 		if code != response.SUCCESS {
-			return code, comments, tmpPage
+			return code, commentsDetail, tmpPage
 		}
-		tmpUserBasic := dao.UserInfoBasic{
-			StudentId: tmpComment.Publisher,
+		tmpCommentDetail.PublisherInfo = dao.UserInfoBasic{
+			StudentId: tmpCommentDetail.Publisher,
 		}
-		user.GetUserInfoBasic(&tmpUserBasic)
-		tmpComment.PublisherInfo = tmpUserBasic
-		_, tmpComment.Star = util.GetTotalById(commentId, "likes", "parent_id")
-		tmpComment.IsStart = util.IsPublished(commentId, "likes", "parent_id", "like_publisher", stuId)
-		comments = append(comments, tmpComment)
+		user.GetUserInfoBasic(&(tmpCommentDetail.PublisherInfo))
+		_, tmpCommentDetail.Star, tmpCommentDetail.IsStart = liked.GetTotalAndLiked(tmpCommentDetail.CommentId, stuId)
+		commentsDetail = append(commentsDetail, tmpCommentDetail)
 	}
-	return response.SUCCESS, comments, tmpPage
+	return response.SUCCESS, commentsDetail, tmpPage
 }
 
-func GetPreChildCById(size int, commentId, stuId string) (int, model.ChildComment) {
-	var code int
-	var children model.ChildComment
-	var page model.Page
-	code, children.Comments, page = GetCommentByIdPage(1, size, commentId, stuId)
-	children.Total = page.Total
-	if code != response.SUCCESS {
-		return code, children
+func GetCommentChildrenByPage(current, size int, commentId, stuId string) (int, []dao.CommentChild, model.Page) {
+	var commentChildren []dao.CommentChild
+	code, childrenDetail, tmpPage := GetCommentByIdPage(current, size, commentId, stuId)
+	for _, item := range childrenDetail {
+		tmpCommentChild := dao.CommentChild{
+			CommentDetail: item,
+			ReplierInfo: dao.UserInfoBasic{
+				StudentId: item.Replier,
+			},
+		}
+		user.GetUserInfoBasic(&(tmpCommentChild.ReplierInfo))
+		commentChildren = append(commentChildren, tmpCommentChild)
 	}
-	return code, children
-}
-
-func getCommentsByPageFromMysql(current, size int, parentId string) (int, []model.CommentDetail) {
-	var comments []model.CommentDetail
-	sql := `SELECT * FROM comment
-			WHERE parent_id = ?
-			AND deleted = 0
-			ORDER BY update_time
-			LIMIT ?, ?`
-	if err := mysql.DB.Select(&comments, sql, parentId, (current-1)*size, size); err != nil {
-		return response.ERROR, comments
-	}
-	return response.SUCCESS, comments
+	return code, commentChildren, tmpPage
 }

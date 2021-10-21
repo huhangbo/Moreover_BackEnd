@@ -1,9 +1,8 @@
 package main
 
 import (
-	"Moreover/connent"
+	"Moreover/conn"
 	"Moreover/pkg/mysql"
-	"Moreover/pkg/redis"
 	"Moreover/router"
 	"Moreover/setting"
 	"fmt"
@@ -12,9 +11,9 @@ import (
 func main() {
 	setting.Init()
 	mysql.Init(setting.Config.MySQLConfig)
-	connent.InitMysql(setting.Config.MySQLConfig)
+	conn.InitMysql(setting.Config.MySQLConfig)
 	defer mysql.Close()
-	redis.Init(setting.Config.RedisConfig)
-	defer redis.Close()
+	conn.InitRedis(setting.Config.RedisConfig)
+	defer conn.Close()
 	router.InitRouter(fmt.Sprintf(":%d", setting.Config.Port))
 }

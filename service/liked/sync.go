@@ -1,32 +1,20 @@
 package liked
 
 import (
-	"Moreover/model"
-	"Moreover/pkg/mysql"
-	"Moreover/pkg/redis"
-	"Moreover/pkg/response"
-	goRedis "github.com/go-redis/redis"
-	"time"
+	"Moreover/conn"
+	"Moreover/dao"
+	"github.com/go-redis/redis"
 )
 
-func SyncLikeMysqlToRedis(parentId string) int {
-	var tmpLikes []model.Like
-	key := "like:sort:" + parentId
-	sql := `SELECT parent_id, like_publisher, update_time
-			FROM liked
-			WHERE parent_id = ?
-			AND deleted = 0
-			ORDER BY update_time DESC`
-	if err := mysql.DB.Select(&tmpLikes, sql, parentId); err != nil {
-		return response.ERROR
+func SyncLikeToRedis(likes []dao.Liked) {
+	key := "like:sort:" + likes[0].ParentId
+	pipe := conn.Redis.Pipeline()
+	for _, item := range likes {
+		pipe.ZAdd(key, redis.Z{Member: item.Publisher, Score: float64(item.CreatedAt.Unix())})
 	}
-	pipe := redis.DB.Pipeline()
-	for _, item := range tmpLikes {
-		tmpPublishTime, _ := time.ParseInLocation("2006-01-02 15:04:05", item.UpdateTime, time.Local)
-		pipe.ZAdd(key, goRedis.Z{Member: item.LikePublisher, Score: float64(tmpPublishTime.Unix())})
-	}
+	pipe.Expire(key, timeLikedExpiration)
 	if _, err := pipe.Exec(); err != nil {
-		return response.ERROR
+		return
 	}
-	return response.SUCCESS
+	return
 }

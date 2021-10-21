@@ -1,46 +1,33 @@
 package activity
 
 import (
-	"Moreover/pkg/mysql"
-	"Moreover/pkg/redis"
+	"Moreover/conn"
+	"Moreover/dao"
 	"Moreover/pkg/response"
-	"fmt"
 )
 
-func DeleteActivityById(activityId, stuId string) int {
-	code, tmpActivity := GetActivityById(activityId)
+func DeleteActivity(activity dao.Activity, stuId string) int {
+	code := GetActivityById(&activity)
 	if code != response.SUCCESS {
 		return response.ERROR
 	}
-	if tmpActivity.Publisher != stuId {
+	if activity.Publisher != stuId {
 		return response.AuthError
 	}
-	code = deleteActivityFromRedis(activityId, tmpActivity.Category)
-	code = deleteActivityFromMysql(activityId, 1)
+	conn.MySQL.Delete(&activity)
+	code = deleteActivityFromRedis(activity)
 	return code
 }
 
-func deleteActivityFromRedis(activityId, category string) int {
-	keyActivity := "activity:id:" + activityId
-	keySort := "activity:sort"
-	keyCategorySort := "activity:sort:" + category
-	pipe := redis.DB.Pipeline()
+func deleteActivityFromRedis(activity dao.Activity) int {
+	keyActivity := "activity:id:" + activity.ActivityId
+	keySort := "activity:sort:"
+	keyCategorySort := "activity:sort:" + activity.Category
+	pipe := conn.Redis.Pipeline()
 	pipe.Del(keyActivity)
-	pipe.ZRem(keySort, activityId)
-	pipe.ZRem(keyCategorySort, activityId)
+	pipe.ZRem(keySort, activity.ActivityId)
+	pipe.ZRem(keyCategorySort, activity.ActivityId)
 	if _, err := pipe.Exec(); err != nil {
-		fmt.Printf("delete activity from redis fail, err: %v\n", err)
-		return response.ERROR
-	}
-	return response.SUCCESS
-}
-
-func deleteActivityFromMysql(activityId string, state int) int {
-	sql := `UPDATE activity
-			SET deleted = ?
-			WHERE activity_id = ?`
-	if _, err := mysql.DB.Exec(sql, activityId, state); err != nil {
-		fmt.Printf("delete activity from mysql fail, err: %v\n", err)
 		return response.ERROR
 	}
 	return response.SUCCESS

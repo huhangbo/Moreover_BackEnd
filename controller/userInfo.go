@@ -10,7 +10,7 @@ import (
 func GetUserInfoById(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	userId := c.Param("userId")
-	tmpUserDetail := user.DetailInfo{
+	tmpUserDetail := dao.UserInfoDetail{
 		UserInfo: dao.UserInfo{
 			StudentId: userId,
 		},

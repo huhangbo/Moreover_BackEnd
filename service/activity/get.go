@@ -1,118 +1,76 @@
 package activity
 
 import (
-	"Moreover/model"
-	"Moreover/pkg/mysql"
-	"Moreover/pkg/redis"
+	"Moreover/conn"
+	"Moreover/dao"
 	"Moreover/pkg/response"
-	"Moreover/service/util"
+	"Moreover/service/liked"
+	"Moreover/service/user"
 	"encoding/json"
-	goRedis "github.com/go-redis/redis"
 )
 
-func GetActivityById(activityId string) (int, model.Activity) {
-	code, tmpActivity := getActivityByIdFromRedis(activityId)
+func GetActivityById(activity *dao.Activity) int {
+	code := getActivityByIdFromRedis(activity)
 	if code != response.SUCCESS {
-		code, tmpActivity = getActivityByIdFromMysql(activityId)
-		if code == response.SUCCESS {
-			publishActivityToRedis(tmpActivity)
+		if err := conn.MySQL.Where("activity_id = ?", (*activity).ActivityId).First(activity).Error; err != nil {
+			return response.FAIL
 		}
+		publishActivityToRedis(*activity)
+		return response.SUCCESS
 	}
-	return code, tmpActivity
+	return code
 }
 
-func GetActivityDetailById(activityId, stuId string) (int, model.ActivityDetail) {
-	var tmpActivityDetail model.ActivityDetail
-	code, tmpActivity := GetActivityById(activityId)
-	tmpActivityDetail.Activity = tmpActivity
-	if code != response.SUCCESS {
-		return code, tmpActivityDetail
+func GetActivityDetailById(detail *dao.ActivityDetail, stuId string) int {
+	tmpActivity := dao.Activity{
+		ActivityId: detail.ActivityId,
 	}
-	_, tmpActivityDetail.Star = util.GetTotalById(activityId, "liked", "parent_id")
-	tmpActivityDetail.IsStar = util.IsPublished(activityId, "liked", "parent_id", "like_publisher", stuId)
-	return response.SUCCESS, tmpActivityDetail
-}
-
-func GetPublisherById(activityId string) (int, string) {
-	code, activity := GetActivityById(activityId)
-	return code, activity.Publisher
+	code := GetActivityById(&tmpActivity)
+	detail.Activity = tmpActivity
+	detail.PublisherInfo.StudentId = detail.Publisher
+	user.GetUserInfoBasic(&(detail.PublisherInfo))
+	_, detail.Star, detail.IsStar = liked.GetTotalAndLiked(detail.ActivityId, stuId)
+	return code
 }
 
 func GetTotal(category string) (int, int) {
-	code, total := getTotalFromRedis(category)
-	if code != response.SUCCESS {
-		code, total = getTotalFromMysql(category, "category")
-	}
-	return code, total
-}
-
-func getActivityByIds(activityIds []string) (int, []model.Activity) {
-	var activities []model.Activity
-	for i := 0; i < len(activityIds); i++ {
-		tmpRedisCode, tmpRedisActivity := GetActivityById(activityIds[i])
-		if tmpRedisCode != response.SUCCESS {
-			return tmpRedisCode, activities
+	key := "activity:sort:" + category
+	total, err := conn.Redis.ZCard(key).Result()
+	if err != nil || total == 0 {
+		go SyncActivitySortRedis()
+		if category == "" {
+			if err := conn.MySQL.Model(&dao.Activity{}).Count(&total).Error; err != nil {
+				return response.ERROR, int(total)
+			}
+		} else {
+			if err := conn.MySQL.Model(&dao.Activity{}).Where("category = ?", category).Count(&total); err != nil {
+				return response.ERROR, int(total)
+			}
 		}
-		activities = append(activities, tmpRedisActivity)
-	}
-	return response.SUCCESS, activities
-}
-
-func getActivityByIdFromRedis(activityId string) (int, model.Activity) {
-	var activity model.Activity
-	activityString, err := redis.DB.Get("activity:id:" + activityId).Result()
-	if err != nil {
-		if err == goRedis.Nil {
-			return response.NotFound, activity
-		}
-		return response.ERROR, activity
-	}
-	if err := json.Unmarshal([]byte(activityString), &activity); err != nil {
-		return response.ERROR, activity
-	}
-	return response.SUCCESS, activity
-}
-
-func getTotalFromRedis(category string) (int, int) {
-	key := "activity:sort"
-	if category != "" {
-		key = "activity:sort:" + category
-	}
-	total, _ := redis.DB.ZCard(key).Result()
-	if total == 0 {
-		return response.NotFound, int(total)
+		return response.SUCCESS, int(total)
 	}
 	return response.SUCCESS, int(total)
 }
 
-func getActivityByIdFromMysql(activityId string) (int, model.Activity) {
-	var activity model.Activity
-	sql := `SELECT * FROM activity
-			WHERE activity_id = ?
-			AND deleted = 0`
-	if err := mysql.DB.Get(&activity, sql, activityId); err != nil {
-		return response.ERROR, activity
+func getActivityByIds(activityIds []string) (int, []dao.Activity) {
+	var activities []dao.Activity
+	for i := 0; i < len(activityIds); i++ {
+		tmpActivity := dao.Activity{
+			ActivityId: activityIds[i],
+		}
+		GetActivityById(&tmpActivity)
+		activities = append(activities, tmpActivity)
 	}
-	return response.SUCCESS, activity
+	return response.SUCCESS, activities
 }
 
-func getTotalFromMysql(category, publishType string) (int, int) {
-	var total int
-	if category == "" {
-		sql := `SELECT COUNT(*)
-				FROM activity
-				WHERE deleted = 0`
-		if err := mysql.DB.Get(&total, sql); err != nil {
-			return response.ERROR, 0
-		}
-		return response.SUCCESS, total
+func getActivityByIdFromRedis(activity *dao.Activity) int {
+	activityString, err := conn.Redis.Get("activity:id:" + (*activity).ActivityId).Result()
+	if activityString == "" || err != nil {
+		return response.FAIL
 	}
-	sql := `SELECT COUNT(*)
-			FROM activity
-			WHERE deleted = 0
-			AND ` + publishType + ` = ?`
-	if err := mysql.DB.Get(&total, sql, category); err != nil {
-		return response.ERROR, total
+	if err := json.Unmarshal([]byte(activityString), activity); err != nil {
+		return response.ERROR
 	}
-	return response.SUCCESS, total
+	return response.SUCCESS
 }

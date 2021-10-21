@@ -1,28 +1,20 @@
 package user
 
 import (
-	"Moreover/connent"
+	"Moreover/conn"
 	"Moreover/dao"
-	"Moreover/pkg/redis"
 	"Moreover/pkg/response"
 	"Moreover/service/util"
 	"encoding/json"
 	"time"
 )
 
-type DetailInfo struct {
-	dao.UserInfo
-	Follower int
-	Fan      int
-	IsFollow bool
-}
-
 const InfoExpiration = time.Hour * 24 * 7
 
 func GetUserInfo(info *dao.UserInfo) int {
 	code := getUserInfoFromRedis(info)
 	if code != response.SUCCESS {
-		connent.MySQL.First(info, &info.StudentId)
+		conn.MySQL.First(info, &info.StudentId)
 	}
 	code = publishUserInfoToRedis(*info)
 	return code
@@ -45,7 +37,7 @@ func GetUserInfoBasic(basic *dao.UserInfoBasic) int {
 	return response.SUCCESS
 }
 
-func GetUserInfoDetail(detail *DetailInfo, stuId string) int {
+func GetUserInfoDetail(detail *dao.UserInfoDetail, stuId string) int {
 	tmpUserInfo := dao.UserInfo{
 		StudentId: detail.StudentId,
 	}
@@ -72,17 +64,17 @@ func GetKindDetail(likes []string) (int, []dao.UserInfoBasic) {
 }
 
 func UpdateUserInfo(info dao.UserInfo) int {
-	if err := connent.MySQL.Model(&info).Updates(info).Error; err != nil {
+	if err := conn.MySQL.Model(&info).Updates(info).Error; err != nil {
 		return response.FAIL
 	}
-	connent.MySQL.First(&info)
+	conn.MySQL.First(&info, info.StudentId)
 	publishUserInfoToRedis(info)
 	return response.SUCCESS
 }
 
 func getUserInfoFromRedis(info *dao.UserInfo) int {
 	key := "user:id:" + info.StudentId
-	userInfoString, err := redis.DB.Get(key).Result()
+	userInfoString, err := conn.Redis.Get(key).Result()
 	if err != nil {
 		return response.FAIL
 	}
@@ -98,7 +90,7 @@ func publishUserInfoToRedis(info dao.UserInfo) int {
 	if err != nil {
 		return response.ERROR
 	}
-	if _, err := redis.DB.Set(key, string(tmpInfo), InfoExpiration).Result(); err != nil {
+	if _, err := conn.Redis.Set(key, string(tmpInfo), InfoExpiration).Result(); err != nil {
 		return response.ERROR
 	}
 	return response.SUCCESS

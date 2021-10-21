@@ -1,45 +1,33 @@
 package comment
 
 import (
-	"Moreover/pkg/mysql"
-	"Moreover/pkg/redis"
+	"Moreover/conn"
+	"Moreover/dao"
 	"Moreover/pkg/response"
 )
 
-func DeleteCommentById(commentId, stuId string) int {
-	code, tmpComment := GetCommentById(commentId)
+func DeleteComment(comment dao.Comment, stuId string) int {
+	code := GetCommentById(&comment)
 	if code != response.SUCCESS {
 		return code
 	}
-	if stuId != tmpComment.Publisher {
+	if comment.Publisher != stuId {
 		return response.AuthError
 	}
-	code = deleteCommentFromMysql(commentId)
-	if code != response.SUCCESS {
-		return code
-	}
-	return deleteCommentFromRedis(commentId, tmpComment.ParentID)
+	conn.MySQL.Where("parent_id = ?", comment.CommentId).Or("comment_id = ?", comment.CommentId).Delete(&comment)
+	code = deleteCommentFromRedis(comment)
+	return code
 }
 
-func deleteCommentFromRedis(commentId, parentId string) int {
-	idKey := "comment:id:" + commentId
-	sortParentKey := "comment:sort:" + parentId
-	pipe := redis.DB.Pipeline()
+func deleteCommentFromRedis(comment dao.Comment) int {
+	idKey := "comment:id:" + comment.CommentId
+	sortKey := "comment:sort:" + comment.CommentId
+	sortParentKey := "comment:sort:" + comment.ParentId
+	pipe := conn.Redis.Pipeline()
 	pipe.Del(idKey)
-	pipe.ZRem(sortParentKey, commentId)
+	pipe.Del(sortKey)
+	pipe.ZRem(sortParentKey, comment.CommentId)
 	if _, err := pipe.Exec(); err != nil {
-		return response.ERROR
-	}
-	return response.SUCCESS
-}
-
-func deleteCommentFromMysql(commentId string) int {
-	sql := `UPDATE comment
-			SET deleted = 1
-			WHERE comment_id = ?
-			OR parent_id = ?`
-
-	if _, err := mysql.DB.Exec(sql, commentId, commentId); err != nil {
 		return response.ERROR
 	}
 	return response.SUCCESS

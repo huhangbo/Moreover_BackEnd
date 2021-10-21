@@ -1,40 +1,32 @@
 package controller
 
 import (
-	"Moreover/model"
+	"Moreover/dao"
 	"Moreover/pkg/response"
-	follow2 "Moreover/service/follow"
+	"Moreover/service/follow"
 	"github.com/gin-gonic/gin"
 	"strconv"
-	"time"
 )
 
 func Follow(c *gin.Context) {
-	stuId, ok := c.Get("stuId")
-	if !ok {
-		response.Response(c, response.AuthError, nil)
-		return
+	stuId, _ := c.Get("stuId")
+	parentId := c.Param("parentId")
+	tmpFollow := dao.Follow{
+		Parent:    parentId,
+		Publisher: stuId.(string),
 	}
-	now := time.Now().Format("2006-01-02 15:04:05")
-	follower := c.Param("follower")
-	tmpFollow := model.Follow{
-		CreateTime: now,
-		UpdateTime: now,
-		Fan:        stuId.(string),
-		Follower:   follower,
-	}
-	code := follow2.PublishFollow(tmpFollow)
+	code := follow.PublishFollow(tmpFollow)
 	response.Response(c, code, nil)
 }
 
 func UnFollow(c *gin.Context) {
-	stuId, ok := c.Get("stuId")
-	if !ok {
-		response.Response(c, response.AuthError, nil)
-		return
+	stuId, _ := c.Get("stuId")
+	parentId := c.Param("parentId")
+	tmpFollow := dao.Follow{
+		Parent:    parentId,
+		Publisher: stuId.(string),
 	}
-	follower := c.Param("follower")
-	code := follow2.Unfollow(follower, stuId.(string))
+	code := follow.Unfollow(tmpFollow)
 	response.Response(c, code, nil)
 }
 
@@ -43,7 +35,17 @@ func GetFollowByPage(c *gin.Context) {
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
 	followType := c.Param("followType")
 	id := c.Param("id")
-	code, follows, tmpPage := follow2.GetFollowById(current, pageSize, id, followType)
+	var tmp string
+	switch followType {
+	case "publisher":
+		tmp = "parent"
+	case "parent":
+		tmp = "publisher"
+	default:
+		response.Response(c, response.ParamError, nil)
+		return
+	}
+	code, follows, tmpPage := follow.GetFollowById(current, pageSize, id, followType, tmp)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
