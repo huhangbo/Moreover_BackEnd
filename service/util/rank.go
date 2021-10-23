@@ -8,14 +8,14 @@ import (
 	"time"
 )
 
-func GetTopScore(star int, createdAt time.Time) float64 {
-	hour := time.Now().Hour() - createdAt.Hour()
-	return float64((star+1)/(hour+2) ^ 2)
+func GetTopScore(star, comments int, createdAt time.Time) float64 {
+	minutes := time.Now().Minute() - createdAt.Minute()
+	return (float64(star)*0.3 + float64(comments)*0.7) * 1000 * (float64(minutes)/60 + 2)
 }
 
 func TopPost(post dao.PostDetail) int {
-	key := "post:sort:"
-	score := GetTopScore(post.Star, post.CreatedAt)
+	key := "post:sort:top"
+	score := GetTopScore(post.Star, post.Comments, post.CreatedAt)
 	if err := conn.Redis.ZAdd(key, redis.Z{Member: post.PostId, Score: score}); err != nil {
 		return response.FAIL
 	}

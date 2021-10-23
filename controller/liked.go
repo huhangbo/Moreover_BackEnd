@@ -7,6 +7,7 @@ import (
 	"Moreover/service/comment"
 	"Moreover/service/liked"
 	"Moreover/service/post"
+	"Moreover/service/util"
 	"github.com/gin-gonic/gin"
 	"strconv"
 )
@@ -39,15 +40,13 @@ func PublishLike(c *gin.Context) {
 		}
 		tmpLike.Publisher = tmp.Publisher
 	case "post":
-		tmp := dao.Post{
-			PostId: parentId,
-		}
-		if code := post.GetPost(&tmp); code != response.SUCCESS {
+		tmp := dao.PostDetail{Post: dao.Post{PostId: parentId}}
+		if code := post.GetPostDetail(&tmp, stuId.(string)); code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
+		util.TopPost(tmp)
 		tmpLike.Publisher = tmp.Publisher
-		liked.PublishTopPost(tmpLike)
 	default:
 		response.Response(c, response.ParamError, nil)
 		return

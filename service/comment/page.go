@@ -10,10 +10,10 @@ import (
 	"Moreover/service/util"
 )
 
-func GetCommentByIdPage(current, size int, commentId, stuId string) (int, []dao.CommentDetail, model.Page) {
-	code, total := util.GetTotalById(commentId, "comment", "parent_id")
+func GetCommentByIdPage(current, size int, parentId, stuId string) (int, []dao.CommentDetail, model.Page) {
+	code, total := util.GetTotalById(parentId, "comment", "parent_id")
 	if code == response.NotFound {
-		SyncCommentSortRedis(commentId)
+		SyncCommentSortRedis(parentId)
 	}
 	var commentsDetail []dao.CommentDetail
 	var commentIds []string
@@ -29,9 +29,9 @@ func GetCommentByIdPage(current, size int, commentId, stuId string) (int, []dao.
 	if (current-1)*size > total {
 		return response.ParamError, commentsDetail, tmpPage
 	}
-	code, commentIds = util.GetIdsByPageFromRedis(current, size, commentId, "comment")
+	code, commentIds = util.GetIdsByPageFromRedis(current, size, parentId, "comment")
 	if code != response.SUCCESS || (len(commentIds) == 0 && code == 200) {
-		conn.MySQL.Model(&dao.Comment{}).Select("comment_id").Where("parent_id = ?", commentId).Limit(size).Offset((current - 1) * size).Find(&commentIds)
+		conn.MySQL.Model(&dao.Comment{}).Select("comment_id").Where("parent_id = ?", parentId).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&commentIds)
 	}
 	for i := 0; i < len(commentIds); i++ {
 		tmpCommentDetail := dao.CommentDetail{

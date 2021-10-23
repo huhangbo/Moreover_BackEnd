@@ -16,7 +16,7 @@ func GetPostByPage(current, size int, stuId string) (int, []dao.PostDetail, mode
 	var tmpPage model.Page
 	if total == 0 {
 		var tmpPosts []dao.Post
-		if err := conn.MySQL.Model(&dao.Post{}).Find(&tmpPosts).Error; err != nil {
+		if err := conn.MySQL.Model(&dao.Post{}).Find(&tmpPosts).Order("created_at DESC").Error; err != nil {
 			return response.ERROR, posts, tmpPage
 		}
 		total = int64(len(tmpPosts))
@@ -54,6 +54,22 @@ func GetPostByPublisher(current, size int, stuId string) (int, []dao.Post, model
 		tmpPost := dao.Post{PostId: postIds[i]}
 		GetPost(&tmpPost)
 		posts = append(posts, tmpPost)
+	}
+	return response.SUCCESS, posts, tmpPage
+}
+func GetPostByTop(current, size int, stuId string) (int, []dao.PostDetail, model.Page) {
+	var posts []dao.PostDetail
+	sortKey := "post:sort:top"
+	total, _ := conn.Redis.ZCard(sortKey).Result()
+	tmpPage := model.Page{Current: current, PageSize: size, Total: int(total), TotalPage: int(total)/size + 1}
+	if int(total) < (current-1)*size {
+		return response.ERROR, posts, tmpPage
+	}
+	_, postIds := util.GetIdsByPageFromRedis(current, size, "top", "post")
+	for _, item := range postIds {
+		tmpDetail := dao.PostDetail{Post: dao.Post{PostId: item}}
+		GetPostDetail(&tmpDetail, stuId)
+		posts = append(posts, tmpDetail)
 	}
 	return response.SUCCESS, posts, tmpPage
 }

@@ -6,8 +6,8 @@ import (
 	"Moreover/pkg/response"
 	"Moreover/service/liked"
 	"Moreover/service/user"
+	"Moreover/service/util"
 	"encoding/json"
-	"time"
 )
 
 func GetPost(post *dao.Post) int {
@@ -18,8 +18,9 @@ func GetPost(post *dao.Post) int {
 		if err := conn.MySQL.First(post).Error; err != nil {
 			return response.FAIL
 		}
+		post.Pictures = util.StringToArray(post.Picture)
 		postJson, _ := json.Marshal(post)
-		if err := conn.Redis.Set(key, string(postJson), time.Hour*7*24); err != nil {
+		if _, err := conn.Redis.Set(key, string(postJson), postExpiration).Result(); err != nil {
 			return response.FAIL
 		}
 	}
@@ -31,6 +32,7 @@ func GetPostDetail(detail *dao.PostDetail, stuId string) int {
 		return code
 	}
 	_, detail.Star, detail.IsStar = liked.GetTotalAndLiked(detail.PostId, stuId)
+	_, detail.Comments = util.GetTotalById(detail.PostId, "comment", "parent_id")
 	detail.PublisherInfo.StudentId = detail.Publisher
 	user.GetUserInfoBasic(&(detail.PublisherInfo))
 	return response.SUCCESS

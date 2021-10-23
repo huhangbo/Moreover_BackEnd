@@ -18,6 +18,7 @@ func PublishComment(comment dao.Comment) int {
 	if !util.PublishSortRedis(comment.CommentId, float64(time.Now().Unix()), "comment:sort:"+comment.ParentId) {
 		return response.FAIL
 	}
+	publishCommentToRedis(comment)
 	return response.SUCCESS
 }
 

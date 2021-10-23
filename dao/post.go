@@ -20,5 +20,6 @@ type PostDetail struct {
 	Post          `gorm:"embedded"`
 	Star          int  `json:"star"`
 	IsStar        bool `json:"isStar"`
+	Comments      int  `json:"comments"`
 	PublisherInfo UserInfoBasic
 }

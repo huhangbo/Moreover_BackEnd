@@ -5,6 +5,8 @@ import (
 	"Moreover/pkg/response"
 	"Moreover/service/activity"
 	"Moreover/service/comment"
+	"Moreover/service/post"
+	"Moreover/service/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"strconv"
@@ -13,27 +15,35 @@ import (
 func PublishComment(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	ParentId := c.Param("parentId")
-	var tmpComment dao.Comment
+	tmpComment := dao.Comment{
+		CommentId: uuid.New().String(),
+		ParentId:  ParentId,
+		Publisher: stuId.(string),
+	}
 	var replier string
 	if err := c.BindJSON(&tmpComment); err != nil {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
 	switch c.Param("kind") {
-	case "parent":
-		tmpKind := dao.Activity{
-			ActivityId: ParentId,
-		}
+	case "activity":
+		tmpKind := dao.Activity{ActivityId: ParentId}
 		code := activity.GetActivityById(&tmpKind)
 		if code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
 		replier = tmpKind.Publisher
-	case "child":
-		tmpKind := dao.Comment{
-			CommentId: ParentId,
+	case "post":
+		tmpKind := dao.PostDetail{Post: dao.Post{PostId: ParentId}}
+		code := post.GetPostDetail(&tmpKind, stuId.(string))
+		util.TopPost(tmpKind)
+		if code != response.SUCCESS {
+			response.Response(c, response.ParamError, nil)
+			return
 		}
+	case "child":
+		tmpKind := dao.Comment{CommentId: ParentId}
 		code := comment.GetCommentById(&tmpKind)
 		if code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
@@ -41,10 +51,7 @@ func PublishComment(c *gin.Context) {
 		}
 		replier = tmpKind.Publisher
 	}
-	tmpComment.ParentId = ParentId
-	tmpComment.Publisher = stuId.(string)
 	tmpComment.Replier = replier
-	tmpComment.CommentId = uuid.New().String()
 	code := comment.PublishComment(tmpComment)
 	response.Response(c, code, nil)
 }

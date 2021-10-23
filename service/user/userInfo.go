@@ -43,9 +43,9 @@ func GetUserInfoDetail(detail *dao.UserInfoDetail, stuId string) int {
 	}
 	GetUserInfo(&tmpUserInfo)
 	(*detail).UserInfo = tmpUserInfo
-	_, (*detail).Follower = util.GetTotalById(stuId, "follow", "follower")
-	_, (*detail).Fan = util.GetTotalById(stuId, "follow", "fan")
-	(*detail).IsFollow = util.IsPublished(stuId, "follow", "follower", "fan", detail.StudentId)
+	_, (*detail).Follower = util.GetTotalById(stuId, "follow", "parent")
+	_, (*detail).Fan = util.GetTotalById(stuId, "follow", "parent")
+	(*detail).IsFollow = util.IsPublished(stuId, "follow", "parent", "publisher", detail.StudentId)
 	return response.SUCCESS
 }
 

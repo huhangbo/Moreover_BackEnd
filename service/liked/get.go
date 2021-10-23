@@ -28,7 +28,7 @@ func GetLikeByPage(current, size int, parentId string) (int, []dao.UserInfoBasic
 	}
 	code, likes = util.GetIdsByPageFromRedis(current, size, parentId, "liked")
 	if code != response.SUCCESS || len(likes) == 0 {
-		if err := conn.MySQL.Model(dao.Liked{}).Select("publisher").Where("parent_id = ?", parentId).Limit(size).Offset((current - 1) * size).Find(&likes).Error; err != nil {
+		if err := conn.MySQL.Model(dao.Liked{}).Select("publisher").Where("parent_id = ?", parentId).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&likes).Error; err != nil {
 			return response.FAIL, tmpBasic, tmpPage
 		}
 	}

@@ -30,7 +30,7 @@ func GetFollowById(current, size int, follower, followType, tmp string) (int, []
 	}
 	code, follows = GetFollowByIdFromRedis(current, size, follower, followType)
 	if code != response.SUCCESS || len(follows) == 0 {
-		if err := conn.MySQL.Model(&dao.Follow{}).Select(tmp).Where(followType+" = ?", follower).Limit(size).Offset((current - 1) * size).Find(&follows).Error; err != nil {
+		if err := conn.MySQL.Model(&dao.Follow{}).Select(tmp).Where(followType+" = ?", follower).Limit(size).Offset((current - 1) * size).Find(&follows).Order("created_at DESC").Error; err != nil {
 			return code, tmpBasic, tmpPage
 		}
 	}

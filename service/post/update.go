@@ -25,6 +25,6 @@ func UpdatePost(post dao.Post, stuId string) int {
 	post.Pictures = util.StringToArray(post.Picture)
 	key := "post:id:" + post.PostId
 	postJson, _ := json.Marshal(post)
-	conn.Redis.Set(key, string(postJson), talkExpiration)
+	conn.Redis.Set(key, string(postJson), postExpiration)
 	return response.SUCCESS
 }

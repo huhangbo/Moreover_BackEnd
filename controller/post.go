@@ -65,8 +65,17 @@ func GetPostByPage(c *gin.Context) {
 			"posts": posts,
 			"page":  tmpPage,
 		})
+	case "top":
+		code, posts, tmpPage := post.GetPostByTop(current, pageSize, stuId.(string))
+		if code != response.SUCCESS {
+			response.Response(c, code, nil)
+			return
+		}
+		response.Response(c, code, gin.H{
+			"posts": posts,
+			"page":  tmpPage,
+		})
 	default:
 		response.Response(c, response.ParamError, nil)
 	}
-
 }

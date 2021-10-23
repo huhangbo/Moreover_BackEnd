@@ -6,10 +6,11 @@ import (
 	"Moreover/pkg/response"
 	"Moreover/service/util"
 	"encoding/json"
+	"github.com/go-redis/redis"
 	"time"
 )
 
-const talkExpiration = time.Hour * 24 * 7
+const postExpiration = time.Hour * 24 * 7
 
 func PublishPost(post dao.Post) int {
 	post.Picture = util.ArrayToString(post.Pictures)
@@ -17,7 +18,9 @@ func PublishPost(post dao.Post) int {
 		return response.FAIL
 	}
 	key := "post:id:" + post.PostId
-	talkJson, _ := json.Marshal(post)
-	conn.Redis.Set(key, string(talkJson), talkExpiration)
+	sortKey := "post:sort:"
+	postJson, _ := json.Marshal(post)
+	conn.Redis.ZAdd(sortKey, redis.Z{Member: post.PostId, Score: float64(post.CreatedAt.Unix())})
+	conn.Redis.Set(key, string(postJson), postExpiration)
 	return response.SUCCESS
 }
