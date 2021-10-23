@@ -17,7 +17,7 @@ func GetActivitiesByPublisher(current, size int64, stuId string) (int, []dao.Act
 	var activities []dao.Activity
 	code, total := GetTotal(filter)
 	skip := (current - 1) * size
-	option := &options.FindOptions{Limit: &size, Skip: &skip}
+	option := &options.FindOptions{Limit: &size, Skip: &skip, Sort: bson.M{"created_at": -1}}
 	var tmpPage = model.Page{
 		Current:   int(current),
 		PageSize:  int(size),
@@ -51,7 +51,7 @@ func GetActivitiesByPade(current, size int64, stuId, category string) (int, []da
 		return code, activities, tmpPage
 	}
 	skip := (current - 1) * size
-	option := &options.FindOptions{Limit: &size, Skip: &skip}
+	option := &options.FindOptions{Limit: &size, Skip: &skip, Sort: bson.M{"created_at": -1}}
 	results, _ := conn.MongoDB.Collection("activity").Find(context.TODO(), filter, option)
 	if err := results.All(context.TODO(), &activities); err != nil {
 		return response.FAIL, nil, tmpPage

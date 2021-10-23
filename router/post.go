@@ -15,5 +15,6 @@ func PostRouter() {
 		r.PUT("/:postId", controller.UpdatePost)
 
 		r.DELETE("/:postId", controller.DeletePost)
+
 	}
 }

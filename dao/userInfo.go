@@ -6,9 +6,9 @@ import (
 )
 
 type UserInfo struct {
-	CreatedAt   time.Time             `json:"createdAt"`
-	UpdatedAt   time.Time             `json:"updatedAt"`
-	DeletedAt   soft_delete.DeletedAt `json:"deletedAt"`
+	CreatedAt   time.Time             `json:"-"`
+	UpdatedAt   time.Time             `json:"-"`
+	DeletedAt   soft_delete.DeletedAt `json:"-"`
 	StudentId   string                `gorm:"primaryKey"`
 	Nickname    string                `gorm:"default:娶个名字吧"`
 	Avatar      string                `gorm:"default:https://moreover-1305054989.cos.ap-nanjing.myqcloud.com/author.jpg"`

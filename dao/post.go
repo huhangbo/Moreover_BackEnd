@@ -7,7 +7,7 @@ import (
 
 type Post struct {
 	CreatedAt time.Time             `json:"createdAt"`
-	UpdatedAt time.Time             `json:"updatedAt"`
+	UpdatedAt time.Time             `json:"-"`
 	DeletedAt soft_delete.DeletedAt `json:"-"`
 	PostId    string                `gorm:"primaryKey" json:"postId"`
 	Publisher string                `json:"publisher"`

@@ -24,19 +24,28 @@ func PublishLike(c *gin.Context) {
 		tmp := dao.Activity{
 			ActivityId: parentId,
 		}
-		activity.GetActivityById(&tmp)
+		if code := activity.GetActivityById(&tmp); code != response.SUCCESS {
+			response.Response(c, response.ParamError, nil)
+			return
+		}
 		tmpLike.Publisher = tmp.Publisher
 	case "comment":
 		tmp := dao.Comment{
 			CommentId: parentId,
 		}
-		comment.GetCommentById(&tmp)
+		if code := comment.GetCommentById(&tmp); code != response.SUCCESS {
+			response.Response(c, response.ParamError, nil)
+			return
+		}
 		tmpLike.Publisher = tmp.Publisher
 	case "post":
 		tmp := dao.Post{
 			PostId: parentId,
 		}
-		post.GetPost(&tmp)
+		if code := post.GetPost(&tmp); code != response.SUCCESS {
+			response.Response(c, response.ParamError, nil)
+			return
+		}
 		tmpLike.Publisher = tmp.Publisher
 		liked.PublishTopPost(tmpLike)
 	default:

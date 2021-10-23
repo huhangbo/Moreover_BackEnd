@@ -8,8 +8,8 @@ import (
 
 type Comment struct {
 	CreatedAt time.Time             `json:"createdAt"`
-	UpdatedAt time.Time             `json:"updatedAt"`
-	DeletedAt soft_delete.DeletedAt `json:"deletedAt"`
+	UpdatedAt time.Time             `json:"-"`
+	DeletedAt soft_delete.DeletedAt `json:"-"`
 	ParentId  string                `json:"parentId"`
 	CommentId string                `gorm:"primaryKey" json:"CommentId"`
 	Publisher string                `json:"publisher"`

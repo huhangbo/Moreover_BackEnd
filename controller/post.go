@@ -67,7 +67,6 @@ func GetPostByPage(c *gin.Context) {
 		})
 	default:
 		response.Response(c, response.ParamError, nil)
-		return
 	}
 
 }

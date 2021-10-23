@@ -12,7 +12,7 @@ func GetTotalById(parentId, kind, parent string) (int, int) {
 		kind = "follow"
 	}
 	if err != nil || total == 0 {
-		if err := conn.MySQL.Table(kind).Where(parent+" = ?", parentId).Where("deleted_at = 0").Count(&total).Error; err != nil {
+		if err := conn.MySQL.Table(kind).Where(parent+" = ?", parentId).Count(&total).Error; err != nil {
 			return response.FAIL, int(total)
 		}
 		if total != 0 {
