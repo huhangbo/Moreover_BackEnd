@@ -6,19 +6,16 @@ import (
 	"Moreover/pkg/response"
 	"Moreover/service/liked"
 	"Moreover/service/user"
-	"encoding/json"
+	"context"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func GetActivityById(activity *dao.Activity) int {
-	code := getActivityByIdFromRedis(activity)
-	if code != response.SUCCESS {
-		if err := conn.MySQL.Where("activity_id = ?", (*activity).ActivityId).First(activity).Error; err != nil {
-			return response.FAIL
-		}
-		publishActivityToRedis(*activity)
-		return response.SUCCESS
+	filter := bson.M{"_id": activity.ActivityId, "deleted": 0}
+	if err := conn.MongoDB.Collection("activity").FindOne(context.TODO(), filter).Decode(&activity); err != nil {
+		return response.FAIL
 	}
-	return code
+	return response.SUCCESS
 }
 
 func GetActivityDetailById(detail *dao.ActivityDetail, stuId string) int {
@@ -33,44 +30,10 @@ func GetActivityDetailById(detail *dao.ActivityDetail, stuId string) int {
 	return code
 }
 
-func GetTotal(category string) (int, int) {
-	key := "activity:sort:" + category
-	total, err := conn.Redis.ZCard(key).Result()
-	if err != nil || total == 0 {
-		go SyncActivitySortRedis()
-		if category == "" {
-			if err := conn.MySQL.Model(&dao.Activity{}).Count(&total).Error; err != nil {
-				return response.ERROR, int(total)
-			}
-		} else {
-			if err := conn.MySQL.Model(&dao.Activity{}).Where("category = ?", category).Count(&total); err != nil {
-				return response.ERROR, int(total)
-			}
-		}
-		return response.SUCCESS, int(total)
+func GetTotal(filter bson.M) (int, int64) {
+	count, err := conn.MongoDB.Collection("activity").CountDocuments(context.TODO(), filter)
+	if err != nil {
+		return response.ParamError, count
 	}
-	return response.SUCCESS, int(total)
-}
-
-func getActivityByIds(activityIds []string) (int, []dao.Activity) {
-	var activities []dao.Activity
-	for i := 0; i < len(activityIds); i++ {
-		tmpActivity := dao.Activity{
-			ActivityId: activityIds[i],
-		}
-		GetActivityById(&tmpActivity)
-		activities = append(activities, tmpActivity)
-	}
-	return response.SUCCESS, activities
-}
-
-func getActivityByIdFromRedis(activity *dao.Activity) int {
-	activityString, err := conn.Redis.Get("activity:id:" + (*activity).ActivityId).Result()
-	if activityString == "" || err != nil {
-		return response.FAIL
-	}
-	if err := json.Unmarshal([]byte(activityString), activity); err != nil {
-		return response.ERROR
-	}
-	return response.SUCCESS
+	return response.SUCCESS, count
 }

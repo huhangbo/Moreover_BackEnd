@@ -20,6 +20,17 @@ func PublishPost(c *gin.Context) {
 	response.Response(c, code, nil)
 }
 
+func UpdatePost(c *gin.Context) {
+	stuId, _ := c.Get("stuId")
+	tmpPost := dao.Post{PostId: c.Param("postId")}
+	if err := c.BindJSON(&tmpPost); err != nil {
+		response.Response(c, response.ParamError, nil)
+		return
+	}
+	code := post.UpdatePost(tmpPost, stuId.(string))
+	response.Response(c, code, nil)
+}
+
 func DeletePost(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	tmpPost := dao.Post{
@@ -33,24 +44,30 @@ func GetPostByPage(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	code, posts, tmpPage := post.GetPostByPage(current, pageSize, stuId.(string))
-	if code != response.SUCCESS {
-		response.Response(c, code, nil)
-		return
-	}
-	response.Response(c, code, gin.H{
-		"posts": posts,
-		"page":  tmpPage,
-	})
-}
-
-func UpdatePost(c *gin.Context) {
-	stuId, _ := c.Get("stuId")
-	tmpPost := dao.Post{PostId: c.Param("postId")}
-	if err := c.BindJSON(&tmpPost); err != nil {
+	switch c.Param("type") {
+	case "page":
+		code, posts, tmpPage := post.GetPostByPage(current, pageSize, stuId.(string))
+		if code != response.SUCCESS {
+			response.Response(c, code, nil)
+			return
+		}
+		response.Response(c, code, gin.H{
+			"posts": posts,
+			"page":  tmpPage,
+		})
+	case "publisher":
+		code, posts, tmpPage := post.GetPostByPublisher(current, pageSize, stuId.(string))
+		if code != response.SUCCESS {
+			response.Response(c, code, nil)
+			return
+		}
+		response.Response(c, code, gin.H{
+			"posts": posts,
+			"page":  tmpPage,
+		})
+	default:
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	code := post.UpdatePost(tmpPost, stuId.(string))
-	response.Response(c, code, nil)
+
 }

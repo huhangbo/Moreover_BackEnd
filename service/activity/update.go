@@ -4,20 +4,26 @@ import (
 	"Moreover/conn"
 	"Moreover/dao"
 	"Moreover/pkg/response"
+	"context"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-func UpdateActivity(activity dao.Activity, stuId string) int {
+func UpdateActivity(activity dao.Activity) int {
 	tmpActivity := dao.Activity{
 		ActivityId: activity.ActivityId,
 	}
 	GetActivityById(&tmpActivity)
-	if tmpActivity.Publisher != stuId {
+	if tmpActivity.Publisher != activity.Publisher {
 		return response.AuthError
 	}
-	if err := conn.MySQL.Model(&activity).Updates(activity).Error; err != nil {
-		return response.ERROR
+	tmp, _ := bson.Marshal(activity)
+	var tmpBson bson.M
+	if err := bson.Unmarshal(tmp, &tmpBson); err != nil {
+		return response.FAIL
 	}
-	conn.MySQL.Where("activity_id = ?", activity.ActivityId).First(&activity)
-	publishActivityToRedis(activity)
+	update := bson.M{"$set": tmpBson}
+	if _, err := conn.MongoDB.Collection("activity").UpdateOne(context.TODO(), bson.M{"_id": activity.ActivityId, "deleted": 0}, update); err != nil {
+		return response.FAIL
+	}
 	return response.SUCCESS
 }

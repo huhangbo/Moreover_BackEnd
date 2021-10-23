@@ -28,12 +28,7 @@ func GetPostByPage(current, size int, stuId string) (int, []dao.PostDetail, mode
 			return response.ERROR, posts, tmpPage
 		}
 	}
-	tmpPage = model.Page{
-		Current:   current,
-		PageSize:  size,
-		Total:     int(total),
-		TotalPage: int(total)/size + 1,
-	}
+	tmpPage = model.Page{Current: current, PageSize: size, Total: int(total), TotalPage: int(total)/size + 1}
 	if int(total) < (current-1)*size {
 		return response.ERROR, posts, tmpPage
 	}
@@ -42,6 +37,23 @@ func GetPostByPage(current, size int, stuId string) (int, []dao.PostDetail, mode
 		tmpDetail := dao.PostDetail{Post: dao.Post{PostId: item}}
 		GetPostDetail(&tmpDetail, stuId)
 		posts = append(posts, tmpDetail)
+	}
+	return response.SUCCESS, posts, tmpPage
+}
+
+func GetPostByPublisher(current, size int, stuId string) (int, []dao.Post, model.Page) {
+	var posts []dao.Post
+	var postIds []string
+	var total int64
+	if err := conn.MySQL.Model(&dao.Post{}).Where("publisher = ?", stuId).Count(&total).Error; err != nil {
+		return response.FAIL, posts, model.Page{}
+	}
+	tmpPage := model.Page{Current: current, PageSize: size, Total: int(total), TotalPage: int(total)/size + 1}
+	conn.MySQL.Model(&dao.Post{}).Select("post_id").Where("publisher = ?", stuId).Limit(size).Offset((current - 1) * size).Order("created_at desc").Find(&postIds)
+	for i := 0; i < len(postIds); i++ {
+		tmpPost := dao.Post{PostId: postIds[i]}
+		GetPost(&tmpPost)
+		posts = append(posts, tmpPost)
 	}
 	return response.SUCCESS, posts, tmpPage
 }

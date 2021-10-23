@@ -6,7 +6,6 @@ import (
 	"Moreover/pkg/response"
 	"Moreover/service/util"
 	"encoding/json"
-	"github.com/go-redis/redis"
 	"time"
 )
 
@@ -20,14 +19,5 @@ func PublishPost(post dao.Post) int {
 	key := "post:id:" + post.PostId
 	talkJson, _ := json.Marshal(post)
 	conn.Redis.Set(key, string(talkJson), talkExpiration)
-	return response.SUCCESS
-}
-
-func TopPost(post dao.PostDetail) int {
-	key := "post:sort:"
-	score := util.GetTopScore(post.Star, post.CreatedAt)
-	if err := conn.Redis.ZAdd(key, redis.Z{Member: post.PostId, Score: score}); err != nil {
-		return response.FAIL
-	}
 	return response.SUCCESS
 }

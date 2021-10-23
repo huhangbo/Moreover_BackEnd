@@ -10,7 +10,7 @@ func PostRouter() {
 	{
 		r.POST("/", controller.PublishPost)
 
-		r.GET("/page/:current/:pageSize", controller.GetPostByPage)
+		r.GET("/:type/:current/:pageSize", controller.GetPostByPage)
 
 		r.PUT("/:postId", controller.UpdatePost)
 

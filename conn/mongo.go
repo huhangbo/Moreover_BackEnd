@@ -12,6 +12,6 @@ var MongoDB *mongo.Database
 
 func InitMongo(config *setting.MongoConfig) {
 	url := fmt.Sprintf("mongodb://%s:%d/?maxPoolSize=20&w=majority", config.Host, config.Port)
-	mongoClient, _ := mongo.Connect(context.TODO(), options.Client().ApplyURI(url))
-	MongoDB = mongoClient.Database("more")
+	MongoClient, _ := mongo.Connect(context.TODO(), options.Client().ApplyURI(url).SetMaxPoolSize(20))
+	MongoDB = MongoClient.Database("more")
 }

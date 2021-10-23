@@ -9,7 +9,7 @@ func activityRouter() {
 	r := Router.Group("/activity")
 	r.Use(auth.Auth())
 	{
-		r.GET("/:activityId", controller.GetActivityById)
+		r.GET("/detail/:activityId", controller.GetActivityById)
 
 		r.POST("", controller.PublishActivity)
 
@@ -17,9 +17,6 @@ func activityRouter() {
 
 		r.DELETE("/:activityId", controller.DeleteActivity)
 
-		r.GET("/page/:current/:pageSize", controller.GetActivityByPage)
-
-		r.GET("/publish/:current/:pageSize", controller.GetActivitiesByPublisher)
-
+		r.GET("/:type/:current/:pageSize", controller.GetActivityByPage)
 	}
 }

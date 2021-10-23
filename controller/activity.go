@@ -7,7 +7,23 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"strconv"
+	"time"
 )
+
+func PublishActivity(c *gin.Context) {
+	stuId, _ := c.Get("stuId")
+	tmpActivity := dao.Activity{
+		CreatedAt:  time.Now().Local(),
+		ActivityId: uuid.New().String(),
+		Publisher:  stuId.(string),
+	}
+	if err := c.BindJSON(&tmpActivity); err != nil {
+		response.Response(c, response.ParamError, nil)
+		return
+	}
+	code := activity.PublishActivity(tmpActivity)
+	response.Response(c, code, nil)
+}
 
 func GetActivityById(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
@@ -25,75 +41,17 @@ func GetActivityById(c *gin.Context) {
 	response.Response(c, code, gin.H{"content": activityDetail})
 }
 
-func PublishActivity(c *gin.Context) {
-	publisher, ok := c.Get("stuId")
-	if !ok {
-		response.Response(c, response.AuthError, nil)
-		return
-	}
-	var tmpActivity dao.Activity
-	if err := c.BindJSON(&tmpActivity); err != nil {
-		response.Response(c, response.ParamError, nil)
-		return
-	}
-	tmpActivity.ActivityId = uuid.New().String()
-	tmpActivity.Publisher = publisher.(string)
-	code := activity.PublishActivity(tmpActivity)
-	response.Response(c, code, nil)
-}
-
-func GetActivityByPage(c *gin.Context) {
-	stuId, ok := c.Get("stuId")
-	if !ok {
-		response.Response(c, response.AuthError, nil)
-		return
-	}
-	current, _ := strconv.Atoi(c.Param("current"))
-	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	category := c.Query("category")
-	code, activities, page := activity.GetActivitiesByPade(current, pageSize, category, stuId.(string))
-	if code != response.SUCCESS {
-		response.Response(c, code, nil)
-		return
-	}
-	response.Response(c, code, gin.H{
-		"activities": activities,
-		"page":       page,
-	})
-}
-
-func GetActivitiesByPublisher(c *gin.Context) {
-	stuId, ok := c.Get("stuId")
-	if !ok {
-		response.Response(c, response.AuthError, nil)
-		return
-	}
-	current, _ := strconv.Atoi(c.Param("current"))
-	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	code, tmpActivities, tmpPage := activity.GetActivitiesByPublisher(current, pageSize, stuId.(string))
-	if code != response.SUCCESS {
-		response.Response(c, code, nil)
-		return
-	}
-	response.Response(c, code, gin.H{
-		"activities": tmpActivities,
-		"page":       tmpPage,
-	})
-}
-
 func UpdateActivity(c *gin.Context) {
-	stuId, ok := c.Get("stuId")
-	if !ok {
-		response.Response(c, response.AuthError, nil)
-		return
+	stuId, _ := c.Get("stuId")
+	tmpActivity := dao.Activity{
+		Publisher: stuId.(string),
 	}
-	var tmpActivity dao.Activity
 	if err := c.BindJSON(&tmpActivity); err != nil {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
 	tmpActivity.ActivityId = c.Param("activityId")
-	code := activity.UpdateActivity(tmpActivity, stuId.(string))
+	code := activity.UpdateActivity(tmpActivity)
 	response.Response(c, code, nil)
 }
 
@@ -104,4 +62,36 @@ func DeleteActivity(c *gin.Context) {
 	}
 	code := activity.DeleteActivity(tmpActivity, stuId.(string))
 	response.Response(c, code, nil)
+}
+
+func GetActivityByPage(c *gin.Context) {
+	stuId, _ := c.Get("stuId")
+	current, _ := strconv.ParseInt(c.Param("current"), 10, 64)
+	pageSize, _ := strconv.ParseInt(c.Param("pageSize"), 10, 64)
+	switch c.Param("type") {
+	case "page":
+		category := c.Query("category")
+		code, activities, page := activity.GetActivitiesByPade(current, pageSize, stuId.(string), category)
+		if code != response.SUCCESS {
+			response.Response(c, code, nil)
+			return
+		}
+		response.Response(c, code, gin.H{
+			"activities": activities,
+			"page":       page,
+		})
+	case "publisher":
+		code, activities, page := activity.GetActivitiesByPublisher(current, pageSize, stuId.(string))
+		if code != response.SUCCESS {
+			response.Response(c, code, nil)
+			return
+		}
+		response.Response(c, code, gin.H{
+			"activities": activities,
+			"page":       page,
+		})
+		return
+	default:
+		response.Response(c, response.ParamError, nil)
+	}
 }

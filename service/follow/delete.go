@@ -7,7 +7,7 @@ import (
 )
 
 func Unfollow(follow dao.Follow) int {
-	if err := conn.MySQL.Unscoped().Delete(&follow).Error; err != nil {
+	if err := conn.MySQL.Delete(&follow).Error; err != nil {
 		return response.FAIL
 	}
 	keyFollow := "publisher:sort:" + follow.Publisher

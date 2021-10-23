@@ -4,31 +4,18 @@ import (
 	"Moreover/conn"
 	"Moreover/dao"
 	"Moreover/pkg/response"
+	"context"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func DeleteActivity(activity dao.Activity, stuId string) int {
-	code := GetActivityById(&activity)
-	if code != response.SUCCESS {
-		return response.ERROR
-	}
+	GetActivityById(&activity)
 	if activity.Publisher != stuId {
 		return response.AuthError
 	}
-	conn.MySQL.Delete(&activity)
-	code = deleteActivityFromRedis(activity)
-	return code
-}
-
-func deleteActivityFromRedis(activity dao.Activity) int {
-	keyActivity := "activity:id:" + activity.ActivityId
-	keySort := "activity:sort:"
-	keyCategorySort := "activity:sort:" + activity.Category
-	pipe := conn.Redis.Pipeline()
-	pipe.Del(keyActivity)
-	pipe.ZRem(keySort, activity.ActivityId)
-	pipe.ZRem(keyCategorySort, activity.ActivityId)
-	if _, err := pipe.Exec(); err != nil {
-		return response.ERROR
+	update := bson.M{"$set": bson.M{"deleted": 1}}
+	if _, err := conn.MongoDB.Collection("activity").UpdateOne(context.TODO(), bson.M{"_id": activity.ActivityId}, update); err != nil {
+		return response.FAIL
 	}
 	return response.SUCCESS
 }

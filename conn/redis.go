@@ -19,12 +19,9 @@ func InitRedis(config *setting.RedisConfig) {
 	if _, err := Redis.Ping().Result(); err != nil {
 		panic(err)
 	}
-
 }
 
-func Close() {
-	err := Redis.Close()
-	if err != nil {
-		fmt.Printf("MySQL close failed, err: %v\n", err)
+func RedisClose() {
+	if err := Redis.Close(); err != nil {
 	}
 }
