@@ -5,8 +5,8 @@ import (
 	"Moreover/dao"
 	"Moreover/model"
 	"Moreover/pkg/response"
-	"Moreover/service/liked"
 	"Moreover/service/user"
+	"Moreover/service/util"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -59,7 +59,7 @@ func GetActivitiesByPade(current, size int64, stuId, category string) (int, []da
 	for i := 0; i < len(activities); i++ {
 		activities[i].PublisherInfo.StudentId = activities[i].Publisher
 		user.GetUserInfoBasic(&(activities[i].PublisherInfo))
-		_, activities[i].Star, activities[i].IsStar = liked.GetTotalAndLiked(activities[i].ActivityId, stuId)
+		_, activities[i].Star, activities[i].IsStar = util.GetTotalAndIs("liked", activities[i].ActivityId, "parent_id", stuId)
 	}
 	return response.SUCCESS, activities, tmpPage
 }

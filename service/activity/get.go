@@ -4,8 +4,8 @@ import (
 	"Moreover/conn"
 	"Moreover/dao"
 	"Moreover/pkg/response"
-	"Moreover/service/liked"
 	"Moreover/service/user"
+	"Moreover/service/util"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -26,7 +26,8 @@ func GetActivityDetailById(detail *dao.ActivityDetail, stuId string) int {
 	detail.Activity = tmpActivity
 	detail.PublisherInfo.StudentId = detail.Publisher
 	user.GetUserInfoBasic(&(detail.PublisherInfo))
-	_, detail.Star, detail.IsStar = liked.GetTotalAndLiked(detail.ActivityId, stuId)
+	_, detail.Star, detail.IsStar = util.GetTotalAndIs("liked", detail.ActivityId, "parent_id", stuId)
+
 	return code
 }
 

@@ -22,18 +22,14 @@ func PublishLike(c *gin.Context) {
 	}
 	switch kind {
 	case "activity":
-		tmp := dao.Activity{
-			ActivityId: parentId,
-		}
+		tmp := dao.Activity{ActivityId: parentId}
 		if code := activity.GetActivityById(&tmp); code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
 		tmpLike.Publisher = tmp.Publisher
 	case "comment":
-		tmp := dao.Comment{
-			CommentId: parentId,
-		}
+		tmp := dao.Comment{CommentId: parentId}
 		if code := comment.GetCommentById(&tmp); code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
@@ -45,8 +41,8 @@ func PublishLike(c *gin.Context) {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
-		util.TopPost(tmp)
 		tmpLike.Publisher = tmp.Publisher
+		go util.TopPost(tmp)
 	default:
 		response.Response(c, response.ParamError, nil)
 		return

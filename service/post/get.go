@@ -4,7 +4,6 @@ import (
 	"Moreover/conn"
 	"Moreover/dao"
 	"Moreover/pkg/response"
-	"Moreover/service/liked"
 	"Moreover/service/user"
 	"Moreover/service/util"
 	"encoding/json"
@@ -31,7 +30,7 @@ func GetPostDetail(detail *dao.PostDetail, stuId string) int {
 	if code := GetPost(&detail.Post); code != response.SUCCESS {
 		return code
 	}
-	_, detail.Star, detail.IsStar = liked.GetTotalAndLiked(detail.PostId, stuId)
+	_, detail.Star, detail.IsStar = util.GetTotalAndIs("liked", detail.PostId, "parent_id", stuId)
 	_, detail.Comments = util.GetTotalById(detail.PostId, "comment", "parent_id")
 	detail.PublisherInfo.StudentId = detail.Publisher
 	user.GetUserInfoBasic(&(detail.PublisherInfo))

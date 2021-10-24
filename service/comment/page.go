@@ -5,7 +5,6 @@ import (
 	"Moreover/dao"
 	"Moreover/model"
 	"Moreover/pkg/response"
-	"Moreover/service/liked"
 	"Moreover/service/user"
 	"Moreover/service/util"
 )
@@ -47,7 +46,7 @@ func GetCommentByIdPage(current, size int, parentId, stuId string) (int, []dao.C
 			StudentId: tmpCommentDetail.Publisher,
 		}
 		user.GetUserInfoBasic(&(tmpCommentDetail.PublisherInfo))
-		_, tmpCommentDetail.Star, tmpCommentDetail.IsStart = liked.GetTotalAndLiked(tmpCommentDetail.CommentId, stuId)
+		_, tmpCommentDetail.Star, tmpCommentDetail.IsStart = util.GetTotalAndIs("liked", tmpCommentDetail.CommentId, "parent_id", stuId)
 		commentsDetail = append(commentsDetail, tmpCommentDetail)
 	}
 	return response.SUCCESS, commentsDetail, tmpPage
