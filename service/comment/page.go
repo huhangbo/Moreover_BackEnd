@@ -10,7 +10,7 @@ import (
 )
 
 func GetCommentByIdPage(current, size int, parentId, stuId string) (int, []dao.CommentDetail, model.Page) {
-	code, total := util.GetTotalById(parentId, "comment", "parent_id")
+	code, total := util.GetTotalById("comment", parentId, "parent_id")
 	if code == response.NotFound {
 		SyncCommentSortRedis(parentId)
 	}

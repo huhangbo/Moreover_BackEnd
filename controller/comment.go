@@ -75,25 +75,32 @@ func GetCommentsByPage(c *gin.Context) {
 	kind := c.Param("kind")
 	parentId := c.Param("parentId")
 	stuId, _ := c.Get("stuId")
-	code, comments, tmpPage := comment.GetCommentByIdPage(current, pageSize, parentId, stuId.(string))
-	if kind == "child" {
-		code, comments, tmpPage := comment.GetCommentChildrenByPage(current, pageSize, parentId, stuId.(string))
-		if code != response.SUCCESS {
-			response.Response(c, code, nil)
-			return
+	switch kind {
+	case "parent":
+		{
+			code, comments, tmpPage := comment.GetCommentByIdPage(current, pageSize, parentId, stuId.(string))
+			if code != response.SUCCESS {
+				response.Response(c, code, nil)
+				return
+			}
+			response.Response(c, code, gin.H{
+				"comments": comments,
+				"page":     tmpPage,
+			})
 		}
-		response.Response(c, code, gin.H{
-			"comments": comments,
-			"page":     tmpPage,
-		})
-		return
+	case "child":
+		{
+			code, comments, tmpPage := comment.GetCommentChildrenByPage(current, pageSize, parentId, stuId.(string))
+			if code != response.SUCCESS {
+				response.Response(c, code, nil)
+				return
+			}
+			response.Response(c, code, gin.H{
+				"comments": comments,
+				"page":     tmpPage,
+			})
+		}
+	default:
+		response.Response(c, response.ParamError, nil)
 	}
-	if code != response.SUCCESS {
-		response.Response(c, code, nil)
-		return
-	}
-	response.Response(c, code, gin.H{
-		"comments": comments,
-		"page":     tmpPage,
-	})
 }
