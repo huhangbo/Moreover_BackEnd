@@ -4,8 +4,10 @@ import (
 	"Moreover/dao"
 	"Moreover/pkg/response"
 	"Moreover/service/follow"
+	"Moreover/service/message"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"time"
 )
 
 func Follow(c *gin.Context) {
@@ -15,7 +17,16 @@ func Follow(c *gin.Context) {
 		Parent:    parentId,
 		Publisher: stuId.(string),
 	}
+	tmpMessage := dao.Message{
+		CreateAt:  time.Now(),
+		Action:    "follow",
+		Receiver:  parentId,
+		Publisher: stuId.(string),
+	}
 	code := follow.PublishFollow(tmpFollow)
+	if code := message.PublishMessage(tmpMessage); code == response.SUCCESS {
+		go message.UserMap.PostMessage(&tmpMessage)
+	}
 	response.Response(c, code, nil)
 }
 

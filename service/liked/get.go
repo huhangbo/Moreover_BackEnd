@@ -10,7 +10,7 @@ import (
 )
 
 func GetLikeByPage(current, size int, parentId string) (int, []dao.UserInfoBasic, model.Page) {
-	code, total := util.GetTotalById(parentId, "liked", "parent_id")
+	code, total := util.GetTotalById(parentId, "liked", "parent")
 	var tmpBasic []dao.UserInfoBasic
 	var likes []string
 	tmpPage := model.Page{Current: current, PageSize: size, Total: total, TotalPage: total/size + 1}
@@ -22,7 +22,7 @@ func GetLikeByPage(current, size int, parentId string) (int, []dao.UserInfoBasic
 	}
 	code, likes = util.GetIdsByPageFromRedis(current, size, parentId, "liked")
 	if code != response.SUCCESS {
-		if err := conn.MySQL.Model(dao.Liked{}).Select("publisher").Where("parent_id = ?", parentId).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&likes).Error; err != nil {
+		if err := conn.MySQL.Model(dao.Liked{}).Select("publisher").Where("parent = ?", parentId).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&likes).Error; err != nil {
 			return response.FAIL, tmpBasic, tmpPage
 		}
 	}

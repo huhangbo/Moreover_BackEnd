@@ -6,10 +6,12 @@ import (
 	"Moreover/service/activity"
 	"Moreover/service/comment"
 	"Moreover/service/liked"
+	"Moreover/service/message"
 	"Moreover/service/post"
 	"Moreover/service/util"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"time"
 )
 
 func PublishLike(c *gin.Context) {
@@ -17,7 +19,14 @@ func PublishLike(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	kind := c.Param("kind")
 	tmpLike := dao.Liked{
-		ParentId:  parentId,
+		Parent:    parentId,
+		Publisher: stuId.(string),
+	}
+	tmpMessage := dao.Message{
+		CreateAt:  time.Now(),
+		Parent:    parentId,
+		Action:    "liked",
+		Kind:      kind,
 		Publisher: stuId.(string),
 	}
 	switch kind {
@@ -27,25 +36,31 @@ func PublishLike(c *gin.Context) {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
-		tmpLike.Publisher = tmp.Publisher
+		tmpLike.Liker = tmp.Publisher
+		tmpMessage.Receiver = tmp.Publisher
 	case "comment":
 		tmp := dao.Comment{CommentId: parentId}
 		if code := comment.GetCommentById(&tmp); code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
-		tmpLike.Publisher = tmp.Publisher
+		tmpLike.Liker = tmp.Publisher
+		tmpMessage.Receiver = tmp.Publisher
 	case "post":
 		tmp := dao.PostDetail{Post: dao.Post{PostId: parentId}}
 		if code := post.GetPostDetail(&tmp, stuId.(string)); code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
-		tmpLike.Publisher = tmp.Publisher
+		tmpLike.Liker = tmp.Publisher
+		tmpMessage.Receiver = tmp.Publisher
 		go util.TopPost(tmp)
 	default:
 		response.Response(c, response.ParamError, nil)
 		return
+	}
+	if code := message.PublishMessage(tmpMessage); code == response.SUCCESS {
+		go message.UserMap.PostMessage(&tmpMessage)
 	}
 	code := liked.PublishLike(tmpLike)
 	response.Response(c, code, nil)
@@ -70,7 +85,7 @@ func DeleteLike(c *gin.Context) {
 	parentId := c.Param("parentId")
 	stuId, _ := c.Get("stuId")
 	tmpLiked := dao.Liked{
-		ParentId:  parentId,
+		Parent:    parentId,
 		Publisher: stuId.(string),
 	}
 	code := liked.UnLike(tmpLiked)

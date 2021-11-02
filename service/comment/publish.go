@@ -15,7 +15,7 @@ func PublishComment(comment dao.Comment) int {
 	if err := conn.MySQL.Create(&comment).Error; err != nil {
 		return response.FAIL
 	}
-	if !util.PublishSortRedis(comment.CommentId, float64(time.Now().Unix()), "comment:sort:"+comment.ParentId) {
+	if !util.PublishSortRedis(comment.CommentId, float64(comment.CreatedAt.Unix()), "comment:sort:"+comment.ParentId) {
 		return response.FAIL
 	}
 	publishCommentToRedis(comment)

@@ -18,12 +18,7 @@ func GetActivitiesByPublisher(current, size int64, stuId string) (int, []dao.Act
 	code, total := GetTotal(filter)
 	skip := (current - 1) * size
 	option := &options.FindOptions{Limit: &size, Skip: &skip, Sort: bson.M{"created_at": -1}}
-	var tmpPage = model.Page{
-		Current:   int(current),
-		PageSize:  int(size),
-		Total:     int(total),
-		TotalPage: int((total / size) + 1),
-	}
+	tmpPage := model.Page{Current: int(current), PageSize: int(size), Total: int(total), TotalPage: int((total / size) + 1)}
 	if code != response.SUCCESS || (current-1)*size > total {
 		return code, activities, tmpPage
 	}
@@ -41,12 +36,7 @@ func GetActivitiesByPade(current, size int64, stuId, category string) (int, []da
 		filter = bson.M{"deleted": 0}
 	}
 	code, total := GetTotal(filter)
-	var tmpPage = model.Page{
-		Current:   int(current),
-		PageSize:  int(size),
-		Total:     int(total),
-		TotalPage: int((total / size) + 1),
-	}
+	tmpPage := model.Page{Current: int(current), PageSize: int(size), Total: int(total), TotalPage: int((total / size) + 1)}
 	if code != response.SUCCESS || (current-1)*size > total {
 		return code, activities, tmpPage
 	}

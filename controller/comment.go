@@ -5,19 +5,29 @@ import (
 	"Moreover/pkg/response"
 	"Moreover/service/activity"
 	"Moreover/service/comment"
+	"Moreover/service/message"
 	"Moreover/service/post"
 	"Moreover/service/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"strconv"
+	"time"
 )
 
 func PublishComment(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	ParentId := c.Param("parentId")
+	kind := c.Param("kind")
 	tmpComment := dao.Comment{
 		CommentId: uuid.New().String(),
 		ParentId:  ParentId,
+		Publisher: stuId.(string),
+	}
+	tmpMessage := dao.Message{
+		CreateAt:  time.Now(),
+		Parent:    tmpComment.CommentId,
+		Action:    "comment",
+		Kind:      kind,
 		Publisher: stuId.(string),
 	}
 	var replier string
@@ -25,7 +35,7 @@ func PublishComment(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	switch c.Param("kind") {
+	switch kind {
 	case "activity":
 		tmpKind := dao.Activity{ActivityId: ParentId}
 		code := activity.GetActivityById(&tmpKind)
@@ -50,8 +60,16 @@ func PublishComment(c *gin.Context) {
 			return
 		}
 		replier = tmpKind.Publisher
+	default:
+		response.Response(c, response.ParamError, nil)
+		return
 	}
 	tmpComment.Replier = replier
+	tmpMessage.Receiver = replier
+	tmpMessage.Detail = tmpComment.Message
+	if code := message.PublishMessage(tmpMessage); code == response.SUCCESS {
+		go message.UserMap.PostMessage(&tmpMessage)
+	}
 	code := comment.PublishComment(tmpComment)
 	response.Response(c, code, nil)
 }
