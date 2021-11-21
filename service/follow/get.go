@@ -10,7 +10,7 @@ import (
 )
 
 func GetFollowById(current, size int, follower, followType, tmp string) (int, []dao.UserInfoBasic, model.Page) {
-	code, total := util.GetTotalById(follower, followType, followType)
+	code, total := util.GetTotalById(followType, follower, followType)
 	var tmpBasic []dao.UserInfoBasic
 	var follows []string
 	tmpPage := model.Page{

@@ -5,51 +5,53 @@ import (
 	"Moreover/dao"
 	"Moreover/model"
 	"Moreover/pkg/response"
-	"Moreover/service/user"
 	"Moreover/service/util"
-	"context"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetActivitiesByPublisher(current, size int64, stuId string) (int, []dao.Activity, model.Page) {
-	filter := bson.M{"deleted": 0, "publisher": stuId}
-	var activities []dao.Activity
-	code, total := GetTotal(filter)
-	skip := (current - 1) * size
-	option := &options.FindOptions{Limit: &size, Skip: &skip, Sort: bson.M{"created_at": -1}}
-	tmpPage := model.Page{Current: int(current), PageSize: int(size), Total: int(total), TotalPage: int((total / size) + 1)}
-	if code != response.SUCCESS || (current-1)*size > total {
-		return code, activities, tmpPage
+func GetActivitiesByPublisher(current, size int, stuId string) (int, []dao.ActivityDetail, model.Page) {
+	var (
+		activities []dao.ActivityDetail
+		ids        []string
+		total      int64
+	)
+	if err := conn.MySQL.Model(&dao.Activity{}).Where("publisher = ?", stuId).Count(&total).Error; err != nil {
+		return response.FAIL, activities, model.Page{}
 	}
-	results, _ := conn.MongoDB.Collection("activity").Find(context.TODO(), filter, option)
-	if err := results.All(context.TODO(), &activities); err != nil {
-		return response.FAIL, nil, tmpPage
+	tmpPage := model.Page{Current: current, PageSize: size, Total: int(total), TotalPage: int(total)/size + 1}
+	if err := conn.MySQL.Model(&dao.Activity{}).Select("activity_id").Where("publisher = ?", stuId).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&ids).Error; err != nil {
+		return response.FAIL, activities, tmpPage
+	}
+	for i := 0; i < len(ids); i++ {
+		tmpActivityDetail := dao.ActivityDetail{Activity: dao.Activity{ActivityId: ids[i]}}
+		if code := GetActivityDetailById(&tmpActivityDetail, stuId); code != response.SUCCESS {
+			return code, activities, tmpPage
+		}
+		activities = append(activities, tmpActivityDetail)
 	}
 	return response.SUCCESS, activities, tmpPage
 }
 
-func GetActivitiesByPade(current, size int64, stuId, category string) (int, []dao.ActivityBasic, model.Page) {
-	var activities []dao.ActivityBasic
-	filter := bson.M{"deleted": 0, "category": category}
-	if category == "" {
-		filter = bson.M{"deleted": 0}
+func GetActivitiesByCategory(current, size int, stuId, category string) (int, []dao.ActivityDetail, model.Page) {
+	var (
+		activities []dao.ActivityDetail
+		tmpPage    model.Page
+	)
+	err, total := GetTotalByCategory(category)
+	if err != nil {
+		return response.FAIL, activities, tmpPage
 	}
-	code, total := GetTotal(filter)
-	tmpPage := model.Page{Current: int(current), PageSize: int(size), Total: int(total), TotalPage: int((total / size) + 1)}
-	if code != response.SUCCESS || (current-1)*size > total {
-		return code, activities, tmpPage
+	tmpPage = model.Page{Current: current, PageSize: size, Total: int(total), TotalPage: (int(total) / size) + 1}
+	if (current-1)*size > int(total) {
+		return response.PasswordError, activities, tmpPage
 	}
-	skip := (current - 1) * size
-	option := &options.FindOptions{Limit: &size, Skip: &skip, Sort: bson.M{"created_at": -1}}
-	results, _ := conn.MongoDB.Collection("activity").Find(context.TODO(), filter, option)
-	if err := results.All(context.TODO(), &activities); err != nil {
-		return response.FAIL, nil, tmpPage
-	}
-	for i := 0; i < len(activities); i++ {
-		activities[i].PublisherInfo.StudentId = activities[i].Publisher
-		user.GetUserInfoBasic(&(activities[i].PublisherInfo))
-		_, activities[i].Star, activities[i].IsStar = util.GetTotalAndIs("liked", activities[i].ActivityId, "parent_id", stuId)
+	_, ids := util.GetIdsByPageFromRedis(current, size, "", "activity")
+	for i := 0; i < len(ids); i++ {
+		tmpActivityDetail := dao.ActivityDetail{Activity: dao.Activity{ActivityId: ids[i]}}
+		if code := GetActivityDetailById(&tmpActivityDetail, stuId); code != response.SUCCESS {
+			return code, activities, tmpPage
+		}
+		tmpActivityDetail.Detail = ""
+		activities = append(activities, tmpActivityDetail)
 	}
 	return response.SUCCESS, activities, tmpPage
 }

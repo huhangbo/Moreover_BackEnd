@@ -10,7 +10,7 @@ import (
 )
 
 func GetLikeByPage(current, size int, parentId string) (int, []dao.UserInfoBasic, model.Page) {
-	code, total := util.GetTotalById(parentId, "liked", "parent")
+	code, total := util.GetTotalById("liked", parentId, "parent")
 	var tmpBasic []dao.UserInfoBasic
 	var likes []string
 	tmpPage := model.Page{Current: current, PageSize: size, Total: total, TotalPage: total/size + 1}

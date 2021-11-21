@@ -8,23 +8,18 @@ import (
 	"encoding/json"
 )
 
-func UpdatePost(post dao.Post, stuId string) int {
-	tmpPost := dao.Post{PostId: post.PostId}
-	if code := GetPost(&tmpPost); code != response.SUCCESS {
-		return response.FAIL
-	}
-	if tmpPost.Publisher != stuId {
-		return response.AuthError
-	}
-	if err := conn.MySQL.Model(&dao.Post{}).Where("post_id = ?", post.PostId).Updates(post).Error; err != nil {
+func UpdatePost(post dao.Post) int {
+	if err := conn.MySQL.Model(&dao.Post{}).Where("post_id = ? AND publisher = ?", post.PostId, post.Publisher).Updates(post).Error; err != nil {
 		return response.ERROR
 	}
-	if err := conn.MySQL.First(&post).Error; err != nil {
+	if err := conn.MySQL.Model(&dao.Post{}).Where("post_id = ?", post.PostId).First(&post).Error; err != nil {
 		return response.ERROR
 	}
 	post.Pictures = util.StringToArray(post.Picture)
 	key := "post:id:" + post.PostId
 	postJson, _ := json.Marshal(post)
-	conn.Redis.Set(key, string(postJson), postExpiration)
+	if _, err := conn.Redis.Set(key, string(postJson), postExpiration).Result(); err != nil {
+		return response.FAIL
+	}
 	return response.SUCCESS
 }

@@ -1,12 +1,11 @@
 package response
 
 const (
-	SUCCESS   = 200
-	FAIL      = 400
-	AuthError = 401
-	NotFound  = 404
-	ERROR     = 500
-
+	SUCCESS         = 200
+	FAIL            = 400
+	AuthError       = 401
+	NotFound        = 404
+	ERROR           = 500
 	UserExist       = 1001
 	UserNotExist    = 1002
 	PasswordError   = 1003

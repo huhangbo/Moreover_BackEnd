@@ -24,7 +24,7 @@ type UserInfoBasic struct {
 }
 
 type UserInfoDetail struct {
-	UserInfo `json:"userInfo"`
+	UserInfo
 	Follower int  `json:"follower"`
 	Fan      int  `json:"fan"`
 	IsFollow bool `json:"isFollow"`

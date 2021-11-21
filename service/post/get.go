@@ -14,7 +14,7 @@ func GetPost(post *dao.Post) int {
 	postString, err := conn.Redis.Get(key).Result()
 	_ = json.Unmarshal([]byte(postString), post)
 	if err != nil {
-		if err := conn.MySQL.First(post).Error; err != nil {
+		if err := conn.MySQL.Model(dao.Post{}).Where("post_id = ?", post.PostId).First(post).Error; err != nil {
 			return response.FAIL
 		}
 		post.Pictures = util.StringToArray(post.Picture)
@@ -30,8 +30,8 @@ func GetPostDetail(detail *dao.PostDetail, stuId string) int {
 	if code := GetPost(&detail.Post); code != response.SUCCESS {
 		return code
 	}
-	_, detail.Star, detail.IsStar = util.GetTotalAndIs("liked", detail.PostId, "parent_id", stuId)
-	_, detail.Comments = util.GetTotalById(detail.PostId, "comment", "parent_id")
+	_, detail.Star, detail.IsStar = util.GetTotalAndIs("liked", detail.PostId, "parent", stuId)
+	_, detail.Comments = util.GetTotalById("comment", detail.PostId, "parent_id")
 	detail.PublisherInfo.StudentId = detail.Publisher
 	user.GetUserInfoBasic(&(detail.PublisherInfo))
 	return response.SUCCESS

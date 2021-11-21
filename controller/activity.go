@@ -59,19 +59,20 @@ func DeleteActivity(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	tmpActivity := dao.Activity{
 		ActivityId: c.Param("activityId"),
+		Publisher:  stuId.(string),
 	}
-	code := activity.DeleteActivity(tmpActivity, stuId.(string))
+	code := activity.DeleteActivity(tmpActivity)
 	response.Response(c, code, nil)
 }
 
 func GetActivityByPage(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
-	current, _ := strconv.ParseInt(c.Param("current"), 10, 64)
-	pageSize, _ := strconv.ParseInt(c.Param("pageSize"), 10, 64)
+	current, _ := strconv.Atoi(c.Param("current"))
+	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
 	switch c.Param("type") {
 	case "page":
 		category := c.Query("category")
-		code, activities, page := activity.GetActivitiesByPade(current, pageSize, stuId.(string), category)
+		code, activities, page := activity.GetActivitiesByCategory(current, pageSize, stuId.(string), category)
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return

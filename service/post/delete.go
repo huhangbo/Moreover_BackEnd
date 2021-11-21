@@ -7,13 +7,12 @@ import (
 	"Moreover/service/util"
 )
 
-func DeletePost(post dao.Post, stuId string) int {
+func DeletePost(post dao.Post) int {
 	tmpPost := dao.Post{PostId: post.PostId}
-	GetPost(&tmpPost)
-	if tmpPost.Publisher != stuId {
-		return response.AuthError
+	if code := GetPost(&tmpPost); code != response.SUCCESS {
+		return code
 	}
-	if err := conn.MySQL.Delete(&post).Error; err != nil {
+	if err := conn.MySQL.Where("post_id = ? AND publisher = ?", post.PostId, post.Publisher).Delete(&dao.Activity{}).Error; err != nil {
 		return response.FAIL
 	}
 	key := "post:id:" + post.PostId

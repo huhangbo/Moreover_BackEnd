@@ -22,21 +22,25 @@ func PublishPost(c *gin.Context) {
 
 func UpdatePost(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
-	tmpPost := dao.Post{PostId: c.Param("postId")}
+	tmpPost := dao.Post{
+		PostId:    c.Param("postId"),
+		Publisher: stuId.(string),
+	}
 	if err := c.BindJSON(&tmpPost); err != nil {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	code := post.UpdatePost(tmpPost, stuId.(string))
+	code := post.UpdatePost(tmpPost)
 	response.Response(c, code, nil)
 }
 
 func DeletePost(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	tmpPost := dao.Post{
-		PostId: c.Param("postId"),
+		PostId:    c.Param("postId"),
+		Publisher: stuId.(string),
 	}
-	code := post.DeletePost(tmpPost, stuId.(string))
+	code := post.DeletePost(tmpPost)
 	response.Response(c, code, nil)
 }
 

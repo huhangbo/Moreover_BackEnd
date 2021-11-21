@@ -7,23 +7,33 @@ import (
 	"Moreover/pkg/response"
 	"Moreover/service/util"
 	"github.com/go-redis/redis"
+	"time"
 )
 
 func GetPostByPage(current, size int, stuId string) (int, []dao.PostDetail, model.Page) {
-	var posts []dao.PostDetail
-	sortKey := "post:sort:"
+	var (
+		posts   []dao.PostDetail
+		tmpPage model.Page
+		sortKey = "post:sort:"
+	)
 	total, _ := conn.Redis.ZCard(sortKey).Result()
-	var tmpPage model.Page
 	if total == 0 {
-		var tmpPosts []dao.Post
-		if err := conn.MySQL.Model(&dao.Post{}).Find(&tmpPosts).Order("created_at DESC").Error; err != nil {
+		var (
+			tmpIds []struct {
+				PostId    string
+				CreatedAt time.Time
+			}
+			tmpZs []redis.Z
+		)
+		if err := conn.MySQL.Model(&dao.Post{}).Find(&tmpIds).Error; err != nil {
 			return response.ERROR, posts, tmpPage
 		}
-		total = int64(len(tmpPosts))
+		total = int64(len(tmpIds))
 		pipe := conn.Redis.Pipeline()
-		for _, item := range tmpPosts {
-			pipe.ZAdd(sortKey, redis.Z{Member: item.PostId, Score: float64(item.CreatedAt.Unix())})
+		for i := 0; i < len(tmpIds); i++ {
+			tmpZs = append(tmpZs, redis.Z{Member: tmpIds[i], Score: float64(tmpIds[i].CreatedAt.Unix())})
 		}
+		pipe.ZAdd(sortKey, tmpZs...)
 		if _, err := pipe.Exec(); err != nil {
 			return response.ERROR, posts, tmpPage
 		}
@@ -42,14 +52,18 @@ func GetPostByPage(current, size int, stuId string) (int, []dao.PostDetail, mode
 }
 
 func GetPostByPublisher(current, size int, stuId string) (int, []dao.Post, model.Page) {
-	var posts []dao.Post
-	var postIds []string
-	var total int64
+	var (
+		posts   []dao.Post
+		postIds []string
+		total   int64
+	)
 	if err := conn.MySQL.Model(&dao.Post{}).Where("publisher = ?", stuId).Count(&total).Error; err != nil {
 		return response.FAIL, posts, model.Page{}
 	}
 	tmpPage := model.Page{Current: current, PageSize: size, Total: int(total), TotalPage: int(total)/size + 1}
-	conn.MySQL.Model(&dao.Post{}).Select("post_id").Where("publisher = ?", stuId).Limit(size).Offset((current - 1) * size).Order("created_at desc").Find(&postIds)
+	if err := conn.MySQL.Model(&dao.Post{}).Select("post_id").Where("publisher = ?", stuId).Limit(size).Offset((current - 1) * size).Order("created_at desc").Find(&postIds).Error; err != nil {
+		return response.FAIL, posts, tmpPage
+	}
 	for i := 0; i < len(postIds); i++ {
 		tmpPost := dao.Post{PostId: postIds[i]}
 		GetPost(&tmpPost)

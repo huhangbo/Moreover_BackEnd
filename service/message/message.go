@@ -48,9 +48,6 @@ func (t *UserData) GetMegQueue(severId uint32) <-chan *dao.Message {
 }
 
 func (t *userMap) PostMessage(message *dao.Message) {
-	if t.IsOnline(message.Receiver) {
-
-	}
 	t.rwMutex.RLock()
 	defer t.rwMutex.RUnlock()
 	if tmpUser, ok := t.Users[message.Receiver]; ok {
@@ -82,9 +79,4 @@ func (t *userMap) RemoveUser(stuId string, serverId uint32) {
 	} else { //多个设备连接
 		delete(t.Users[stuId].MessageQueue, serverId)
 	}
-}
-
-func (t *userMap) IsOnline(stuId string) bool {
-	_, ok := t.Users[stuId]
-	return ok
 }
