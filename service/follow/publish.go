@@ -4,6 +4,7 @@ import (
 	"Moreover/conn"
 	"Moreover/dao"
 	"Moreover/pkg/response"
+	"Moreover/service/user"
 	"Moreover/service/util"
 	"time"
 )
@@ -11,6 +12,10 @@ import (
 const timeFollowExpiration = time.Hour * 24 * 7
 
 func PublishFollow(follow dao.Follow) int {
+	tmpUser := dao.User{StudentId: follow.Parent}
+	if !user.IsUserExist(tmpUser) {
+		return response.UserNotExist
+	}
 	if err := conn.MySQL.Create(&follow).Error; err != nil {
 		return response.FAIL
 	}

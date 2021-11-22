@@ -54,15 +54,17 @@ func PublishLike(c *gin.Context) {
 		}
 		tmpLike.Liker = tmp.Publisher
 		tmpMessage.Receiver = tmp.Publisher
-		go util.TopPost(tmp)
 	default:
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	if err := message.PublishMessage(tmpMessage); err == nil {
-		go message.UserMap.PostMessage(&tmpMessage)
-	}
 	code := liked.PublishLike(tmpLike)
+	if code == response.SUCCESS {
+		if err := message.PublishMessage(tmpMessage); err == nil {
+			message.UserMap.PostMessage(&tmpMessage)
+		}
+		_ = util.TopPost(parentId, "liked")
+	}
 	response.Response(c, code, nil)
 }
 
@@ -90,7 +92,7 @@ func DeleteLike(c *gin.Context) {
 	}
 	code := liked.UnLike(tmpLiked)
 	if code == response.SUCCESS && c.Param("kind") == "post" {
-
+		_ = util.TopPost(parentId, "dislike")
 	}
 	response.Response(c, code, nil)
 }

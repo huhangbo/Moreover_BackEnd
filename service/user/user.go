@@ -11,7 +11,7 @@ func Register(user dao.User) int {
 	if len(user.Password) < 6 || len(user.StudentId) != 8 {
 		return response.ParamError
 	}
-	if isUserExist(user) {
+	if IsUserExist(user) {
 		return response.UserExist
 	}
 	hashPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -32,7 +32,7 @@ func Register(user dao.User) int {
 }
 
 func Login(user dao.User) int {
-	if !isUserExist(user) {
+	if !IsUserExist(user) {
 		return response.UserNotExist
 	}
 	password := user.Password
@@ -44,7 +44,7 @@ func Login(user dao.User) int {
 	return response.SUCCESS
 }
 
-func isUserExist(user dao.User) bool {
+func IsUserExist(user dao.User) bool {
 	if err := conn.MySQL.First(&user, user.StudentId).Error; err != nil {
 		return false
 	}

@@ -22,7 +22,12 @@ func PublishPost(post dao.Post) int {
 	}
 	key := "post:id:" + post.PostId
 	postJson, _ := json.Marshal(post)
-	conn.Redis.ZAdd(sortKey, redis.Z{Member: post.PostId, Score: float64(post.CreatedAt.Unix())})
-	conn.Redis.Set(key, string(postJson), postExpiration)
+	pipe := conn.Redis.Pipeline()
+	pipe.ZAdd(sortKey, redis.Z{Member: post.PostId, Score: float64(post.CreatedAt.Unix())})
+	pipe.ZAdd("post:sort:top", redis.Z{Member: post.PostId, Score: float64(post.CreatedAt.Unix()) / 10000})
+	pipe.Set(key, string(postJson), postExpiration)
+	if _, err := pipe.Exec(); err != nil {
+		return response.FAIL
+	}
 	return response.SUCCESS
 }

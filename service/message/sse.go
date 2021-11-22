@@ -7,7 +7,7 @@ import (
 
 const MsgQueLen = 3
 
-var UserMap userMap
+var UserMap = userMap{Users: map[string]*UserData{}}
 
 type userMap struct {
 	Users   map[string]*UserData

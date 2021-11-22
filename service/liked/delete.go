@@ -7,8 +7,8 @@ import (
 )
 
 func UnLike(liked dao.Liked) int {
-	if err := conn.MySQL.Where("parent = ? AND publisher = ?", liked.Parent, liked.Publisher).Delete(&dao.Liked{}).Error; err != nil {
-		return response.FAIL
+	if err := conn.MySQL.Delete(&dao.Liked{}, "parent = ? AND publisher = ?", liked.Parent, liked.Publisher).Error; err != nil {
+		return response.PasswordError
 	}
 	if _, err := conn.Redis.ZRem("liked:sort:"+liked.Parent, liked.Publisher).Result(); err != nil {
 		return response.FAIL

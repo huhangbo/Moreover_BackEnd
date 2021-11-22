@@ -11,7 +11,5 @@ func messageRouter() {
 		r.GET("/connect", controller.HandleSSE)
 
 		r.GET("/:action/:current/:pageSize", controller.GetMessages)
-
-		r.GET("/read/:action/", controller.ReadMessage)
 	}
 }

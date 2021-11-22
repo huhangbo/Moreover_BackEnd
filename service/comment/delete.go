@@ -14,9 +14,10 @@ func DeleteComment(comment dao.Comment, stuId string) int {
 	if comment.Publisher != stuId {
 		return response.AuthError
 	}
-	conn.MySQL.Where("parent_id = ?", comment.CommentId).Or("comment_id = ?", comment.CommentId).Delete(&comment)
-	code = deleteCommentFromRedis(comment)
-	return code
+	if err := conn.MySQL.Where("parent_id = ?", comment.CommentId).Or("comment_id = ?", comment.CommentId).Delete(dao.Comment{}).Error; err != nil {
+		return response.ParamError
+	}
+	return deleteCommentFromRedis(comment)
 }
 
 func deleteCommentFromRedis(comment dao.Comment) int {

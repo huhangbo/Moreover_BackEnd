@@ -14,6 +14,5 @@ func commentRouter() {
 		r.GET("/:kind/:parentId/:current/:pageSize", controller.GetCommentsByPage)
 
 		r.DELETE("/:commentId", controller.DeleteComment)
-
 	}
 }

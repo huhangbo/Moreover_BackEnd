@@ -47,9 +47,11 @@ func PublishComment(c *gin.Context) {
 	case "post":
 		tmpKind := dao.PostDetail{Post: dao.Post{PostId: ParentId}}
 		code := post.GetPostDetail(&tmpKind, stuId.(string))
-		util.TopPost(tmpKind)
 		if code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
+			return
+		}
+		if err := util.TopPost(ParentId, "comment"); err != nil {
 			return
 		}
 	case "child":

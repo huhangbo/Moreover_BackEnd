@@ -20,7 +20,7 @@ func GetCommentById(comment *dao.Comment) int {
 }
 
 func getCommentByIdFromRedis(comment *dao.Comment) int {
-	commentString, err := conn.Redis.Get("comment:id:" + (*comment).CommentId).Result()
+	commentString, err := conn.Redis.Get("comment:id:" + comment.CommentId).Result()
 	if err != nil || commentString == "" {
 		return response.FAIL
 	}

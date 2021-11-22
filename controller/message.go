@@ -29,8 +29,7 @@ func HandleSSE(c *gin.Context) {
 		go func() {
 			_, count := message.GetUnRead(item, stuId)
 			if count != 0 {
-				response.Response(c, response.SUCCESS, gin.H{"count": count})
-				//c.SSEvent(item, gin.H{"count": count})
+				c.SSEvent(item, gin.H{"count": count})
 			}
 		}()
 	}
@@ -56,15 +55,9 @@ func GetMessages(c *gin.Context) {
 		response.Response(c, response.FAIL, nil)
 		return
 	}
-	response.Response(c, response.SUCCESS, gin.H{"messages": messages, "isEnd": isEnd})
-}
-
-func ReadMessage(c *gin.Context) {
-	stuId, _ := c.Get("stuId")
-	action := c.Param("action")
 	if err := message.ReadAction(action, stuId.(string)); err != nil {
 		response.Response(c, response.FAIL, nil)
 		return
 	}
-	response.Response(c, response.SUCCESS, nil)
+	response.Response(c, response.SUCCESS, gin.H{"messages": messages, "isEnd": isEnd})
 }

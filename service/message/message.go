@@ -22,7 +22,7 @@ func GetMessageByPage(current, size int, action, stuId string) (error, bool, []d
 		messages []dao.Message
 		isEnd    bool
 	)
-	if err := conn.MySQL.Model(dao.Message{}).Where("publisher = ? AND action = ?", stuId, action).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&messages).Error; err != nil {
+	if err := conn.MySQL.Model(dao.Message{}).Where("receiver = ? AND action = ?", stuId, action).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&messages).Error; err != nil {
 		return err, isEnd, messages
 	}
 	if len(messages) < size {
@@ -32,5 +32,5 @@ func GetMessageByPage(current, size int, action, stuId string) (error, bool, []d
 }
 
 func ReadAction(action, stuId string) error {
-	return conn.MySQL.Model(dao.Message{}).Where("publisher = ? AND action = ? AND status = ?", stuId, action, 0).Update("status = ?", 1).Error
+	return conn.MySQL.Model(dao.Message{}).Where("receiver = ? AND action = ? AND status = ?", stuId, action, 0).Update("status", 1).Error
 }
