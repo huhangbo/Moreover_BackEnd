@@ -6,6 +6,7 @@ import (
 )
 
 type UserInfo struct {
+	ID          uint                  `gorm:"autoIncrement primaryKey" json:"-"`
 	CreatedAt   time.Time             `json:"-"`
 	UpdatedAt   time.Time             `json:"-"`
 	DeletedAt   soft_delete.DeletedAt `json:"-"`

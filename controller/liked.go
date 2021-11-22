@@ -59,7 +59,7 @@ func PublishLike(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	if code := message.PublishMessage(tmpMessage); code == response.SUCCESS {
+	if err := message.PublishMessage(tmpMessage); err == nil {
 		go message.UserMap.PostMessage(&tmpMessage)
 	}
 	code := liked.PublishLike(tmpLike)
@@ -89,5 +89,8 @@ func DeleteLike(c *gin.Context) {
 		Publisher: stuId.(string),
 	}
 	code := liked.UnLike(tmpLiked)
+	if code == response.SUCCESS && c.Param("kind") == "post" {
+
+	}
 	response.Response(c, code, nil)
 }

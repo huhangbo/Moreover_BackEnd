@@ -24,7 +24,7 @@ func Follow(c *gin.Context) {
 		Publisher: stuId.(string),
 	}
 	code := follow.PublishFollow(tmpFollow)
-	if code := message.PublishMessage(tmpMessage); code == response.SUCCESS {
+	if err := message.PublishMessage(tmpMessage); err == nil {
 		go message.UserMap.PostMessage(&tmpMessage)
 	}
 	response.Response(c, code, nil)

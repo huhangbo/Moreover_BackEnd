@@ -19,11 +19,8 @@ func GetTotalById(kind, parentId, parent string) (int, int) {
 		kind = "follow"
 	}
 	if err != nil || total == 0 {
-		if err := conn.MySQL.Table(kind).Where(parent+" = ?", parentId).Count(&total).Error; err != nil {
+		if err := conn.MySQL.Table(kind).Where(parent+" = ? AND deleted_at = ?", parentId, 0).Count(&total).Error; err != nil {
 			return response.FAIL, int(total)
-		}
-		if total != 0 {
-			return response.NotFound, int(total)
 		}
 	}
 	return response.SUCCESS, int(total)
@@ -33,7 +30,7 @@ func GetIdsByPageFromRedis(current, size int, parentId, kind string) (int, []str
 	sortKey := kind + ":sort:" + parentId
 	ids, err := conn.Redis.ZRevRange(sortKey, int64((current-1)*size), int64(current*size)-1).Result()
 	if err != nil {
-		return response.ERROR, ids
+		return response.NotFound, ids
 	}
 	return response.SUCCESS, ids
 }
@@ -49,7 +46,7 @@ func GetTotalAndIs(kind, parentId, parent, publisher string) (int, int, bool) {
 		if kind == "publisher" || kind == "parent" {
 			kind = "follow"
 		}
-		if err := conn.MySQL.Table(kind).Select("publisher", "created_at").Where(parent+" = ?", parentId).Find(&tmpSorts).Error; err != nil {
+		if err := conn.MySQL.Table(kind).Select("publisher", "created_at").Where(parent+" = ? AND deleted_at = ?", parentId, 0).Find(&tmpSorts).Error; err != nil {
 			return response.FAIL, len(tmpSorts), is
 		}
 		if len(tmpSorts) != 0 {

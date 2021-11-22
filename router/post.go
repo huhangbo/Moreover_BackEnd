@@ -16,5 +16,7 @@ func PostRouter() {
 
 		r.DELETE("/:postId", controller.DeletePost)
 
+		r.GET("/follow/:current/:pageSize", controller.GetFollowPostByPage)
+
 	}
 }

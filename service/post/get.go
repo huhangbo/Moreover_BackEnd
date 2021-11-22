@@ -4,6 +4,7 @@ import (
 	"Moreover/conn"
 	"Moreover/dao"
 	"Moreover/pkg/response"
+	"Moreover/service/follow"
 	"Moreover/service/user"
 	"Moreover/service/util"
 	"encoding/json"
@@ -35,4 +36,30 @@ func GetPostDetail(detail *dao.PostDetail, stuId string) int {
 	detail.PublisherInfo.StudentId = detail.Publisher
 	user.GetUserInfoBasic(&(detail.PublisherInfo))
 	return response.SUCCESS
+}
+
+func GetFollowPost(current, size int, stuId string) (int, bool, []dao.PostDetail) {
+	var (
+		posts   []dao.PostDetail
+		postIds []string
+		isEnd   bool
+	)
+	err, followers := follow.GetTotalFollow(stuId)
+	if err != nil {
+		return response.ParamError, isEnd, posts
+	}
+	if err := conn.MySQL.Model(dao.Post{}).Where("publisher IN ?", followers).Select("post_id").Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&postIds).Error; err != nil {
+		return response.FAIL, isEnd, posts
+	}
+	if len(postIds) < size {
+		isEnd = true
+	}
+	for i := 0; i < len(postIds); i++ {
+		tmpPost := dao.PostDetail{Post: dao.Post{PostId: postIds[i]}}
+		if code := GetPostDetail(&tmpPost, stuId); code != response.SUCCESS {
+			return response.FAIL, isEnd, posts
+		}
+		posts = append(posts, tmpPost)
+	}
+	return response.SUCCESS, isEnd, posts
 }

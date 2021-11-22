@@ -14,7 +14,6 @@ func GetPostByPage(current, size int, stuId string) (int, []dao.PostDetail, mode
 	var (
 		posts   []dao.PostDetail
 		tmpPage model.Page
-		sortKey = "post:sort:"
 	)
 	total, _ := conn.Redis.ZCard(sortKey).Result()
 	if total == 0 {
@@ -73,7 +72,6 @@ func GetPostByPublisher(current, size int, stuId string) (int, []dao.Post, model
 }
 func GetPostByTop(current, size int, stuId string) (int, []dao.PostDetail, model.Page) {
 	var posts []dao.PostDetail
-	sortKey := "post:sort:top"
 	total, _ := conn.Redis.ZCard(sortKey).Result()
 	tmpPage := model.Page{Current: current, PageSize: size, Total: int(total), TotalPage: int(total)/size + 1}
 	if int(total) < (current-1)*size {

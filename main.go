@@ -16,7 +16,5 @@ func main() {
 
 	defer conn.RedisClose()
 
-	conn.InitMongo(setting.Config.MongoConfig)
-
 	router.InitRouter(fmt.Sprintf(":%d", setting.Config.Port))
 }

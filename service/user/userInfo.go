@@ -14,7 +14,9 @@ const InfoExpiration = time.Hour * 24 * 7
 func GetUserInfo(info *dao.UserInfo) int {
 	code := getUserInfoFromRedis(info)
 	if code != response.SUCCESS {
-		conn.MySQL.First(info, &info.StudentId)
+		if err := conn.MySQL.Model(dao.UserInfo{}).Where("student_id = ?", info.StudentId).First(info).Error; err != nil {
+			return response.UserNotExist
+		}
 	}
 	code = publishUserInfoToRedis(*info)
 	return code

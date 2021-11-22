@@ -9,14 +9,14 @@ import (
 	"sync/atomic"
 )
 
-var messageKind = []string{"comment", "liked", "follow"}
-
-var ServerId uint32
+var (
+	messageKind = []string{"comment", "liked", "follow"}
+	ServerId    uint32
+)
 
 func HandleSSE(c *gin.Context) {
 	stu, _ := c.Get("stuId")
 	stuId := stu.(string)
-	current := c.Param("current")
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
@@ -27,8 +27,11 @@ func HandleSSE(c *gin.Context) {
 	for i := 0; i < len(messageKind); i++ {
 		item := messageKind[i]
 		go func() {
-			_, tmpMessage, tmpCount := message.GetLatest(item, stuId, current)
-			c.SSEvent(item, gin.H{"message": tmpMessage, "count": tmpCount})
+			_, count := message.GetUnRead(item, stuId)
+			if count != 0 {
+				response.Response(c, response.SUCCESS, gin.H{"count": count})
+				//c.SSEvent(item, gin.H{"count": count})
+			}
 		}()
 	}
 	disConn := c.Stream(func(w io.Writer) bool {
@@ -48,17 +51,20 @@ func GetMessages(c *gin.Context) {
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
 	action := c.Param("action")
-	code, messages, tmpPage := message.GetMessageByPage(current, pageSize, action, stuId.(string))
-	if code != response.SUCCESS {
-		response.Response(c, code, nil)
+	err, isEnd, messages := message.GetMessageByPage(current, pageSize, action, stuId.(string))
+	if err != nil {
+		response.Response(c, response.FAIL, nil)
 		return
 	}
-	response.Response(c, code, gin.H{"message": messages, "page": tmpPage})
+	response.Response(c, response.SUCCESS, gin.H{"messages": messages, "isEnd": isEnd})
 }
 
 func ReadMessage(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	action := c.Param("action")
-	code := message.ReadAction(action, stuId.(string))
-	response.Response(c, code, nil)
+	if err := message.ReadAction(action, stuId.(string)); err != nil {
+		response.Response(c, response.FAIL, nil)
+		return
+	}
+	response.Response(c, response.SUCCESS, nil)
 }

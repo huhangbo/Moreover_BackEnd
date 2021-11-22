@@ -83,3 +83,15 @@ func GetPostByPage(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 	}
 }
+
+func GetFollowPostByPage(c *gin.Context) {
+	stuId, _ := c.Get("stuId")
+	current, _ := strconv.Atoi(c.Param("current"))
+	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
+	code, isEnd, posts := post.GetFollowPost(current, pageSize, stuId.(string))
+	if code != response.SUCCESS {
+		response.Response(c, code, nil)
+		return
+	}
+	response.Response(c, code, gin.H{"posts": posts, "isEnd": isEnd})
+}

@@ -16,9 +16,8 @@ func DeletePost(post dao.Post) int {
 		return response.FAIL
 	}
 	key := "post:id:" + post.PostId
-	keySort := "post:sort:"
 	keyTop := "post:sort:top"
-	if !util.DeleteSortRedis(post.PostId, key, keySort, keyTop) {
+	if !util.DeleteSortRedis(post.PostId, key, sortKey, keyTop) {
 		return response.FAIL
 	}
 	return response.SUCCESS

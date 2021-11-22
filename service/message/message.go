@@ -1,82 +1,36 @@
 package message
 
 import (
+	"Moreover/conn"
 	"Moreover/dao"
-	"sync"
 )
 
-const MsgQueLen = 3
-
-var UserMap userMap
-
-type userMap struct {
-	Users   map[string]*UserData
-	rwMutex sync.RWMutex
+func PublishMessage(message dao.Message) error {
+	return conn.MySQL.Create(&message).Error
 }
 
-type UserData struct {
-	StuId        string
-	MessageQueue map[uint32]chan *dao.Message
-	rwMutex      sync.RWMutex
-}
-
-func (t *UserData) InitMsgQue(serverId uint32) {
-	t.rwMutex.Lock()
-	defer t.rwMutex.Unlock()
-	t.MessageQueue[serverId] = make(chan *dao.Message, MsgQueLen)
-}
-
-func (t *UserData) SendMessage(message *dao.Message) {
-	if message.Receiver == message.Publisher {
-		return
+func GetUnRead(action, stuId string) (error, int64) {
+	var count int64
+	if err := conn.MySQL.Model(dao.Message{}).Where("publisher = ? AND action = ? AND status = ?", stuId, action, 0).Count(&count).Error; err != nil {
+		return err, count
 	}
-	t.rwMutex.Lock()
-	defer t.rwMutex.Unlock()
-	for serverId, msgQue := range t.MessageQueue {
-		if len(msgQue) < MsgQueLen {
-			msgQue <- message
-		} else {
-			delete(t.MessageQueue, serverId)
-		}
-	}
+	return nil, count
 }
 
-func (t *UserData) GetMegQueue(severId uint32) <-chan *dao.Message {
-	t.rwMutex.RLock()
-	defer t.rwMutex.RUnlock()
-	return t.MessageQueue[severId]
+func GetMessageByPage(current, size int, action, stuId string) (error, bool, []dao.Message) {
+	var (
+		messages []dao.Message
+		isEnd    bool
+	)
+	if err := conn.MySQL.Model(dao.Message{}).Where("publisher = ? AND action = ?", stuId, action).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&messages).Error; err != nil {
+		return err, isEnd, messages
+	}
+	if len(messages) < size {
+		isEnd = true
+	}
+	return nil, isEnd, messages
 }
 
-func (t *userMap) PostMessage(message *dao.Message) {
-	t.rwMutex.RLock()
-	defer t.rwMutex.RUnlock()
-	if tmpUser, ok := t.Users[message.Receiver]; ok {
-		go tmpUser.SendMessage(message)
-	}
-}
-
-func (t *userMap) AddUser(stuId string, serverId uint32) *UserData {
-	t.rwMutex.RLock()
-	defer t.rwMutex.RUnlock()
-	user, ok := t.Users[stuId]
-	if ok {
-		user.InitMsgQue(serverId)
-	} else {
-		user = &UserData{
-			StuId:        stuId,
-			MessageQueue: map[uint32]chan *dao.Message{serverId: make(chan *dao.Message, MsgQueLen)},
-		}
-		t.Users[stuId] = user
-	}
-	return user
-}
-
-func (t *userMap) RemoveUser(stuId string, serverId uint32) {
-	t.rwMutex.Lock()
-	defer t.rwMutex.Unlock()
-	if len(t.Users[stuId].MessageQueue) == 1 { //只有一个连接
-		delete(t.Users, stuId)
-	} else { //多个设备连接
-		delete(t.Users[stuId].MessageQueue, serverId)
-	}
+func ReadAction(action, stuId string) error {
+	return conn.MySQL.Model(dao.Message{}).Where("publisher = ? AND action = ? AND status = ?", stuId, action, 0).Update("status = ?", 1).Error
 }

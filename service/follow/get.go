@@ -45,3 +45,14 @@ func GetFollowByIdFromRedis(current, size int, follower, category string) (int, 
 	}
 	return code, fans
 }
+
+func GetTotalFollow(follower string) (error, []string) {
+	key := "parent:sort:" + follower
+	followers, _ := conn.Redis.ZRange(key, 0, -1).Result()
+	if len(followers) == 0 {
+		if err := conn.MySQL.Model(&dao.Follow{}).Select("publisher").Find(&followers).Error; err != nil {
+			return err, followers
+		}
+	}
+	return nil, followers
+}
