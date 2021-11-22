@@ -23,7 +23,7 @@ func PublishLike(c *gin.Context) {
 		Publisher: stuId.(string),
 	}
 	tmpMessage := dao.Message{
-		CreateAt:  time.Now(),
+		CreatedAt: time.Now(),
 		Parent:    parentId,
 		Action:    "liked",
 		Kind:      kind,

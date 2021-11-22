@@ -27,7 +27,7 @@ func HandleSSE(c *gin.Context) {
 	for i := 0; i < len(messageKind); i++ {
 		item := messageKind[i]
 		go func() {
-			_, tmpMessage, tmpCount := message.GetLatest("comment", stuId, current)
+			_, tmpMessage, tmpCount := message.GetLatest(item, stuId, current)
 			c.SSEvent(item, gin.H{"message": tmpMessage, "count": tmpCount})
 		}()
 	}
@@ -48,7 +48,7 @@ func GetMessages(c *gin.Context) {
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
 	action := c.Param("action")
-	code, messages, tmpPage := message.GetMessageByPage(int64(current), int64(pageSize), action, stuId.(string))
+	code, messages, tmpPage := message.GetMessageByPage(current, pageSize, action, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return

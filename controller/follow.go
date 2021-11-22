@@ -18,7 +18,7 @@ func Follow(c *gin.Context) {
 		Publisher: stuId.(string),
 	}
 	tmpMessage := dao.Message{
-		CreateAt:  time.Now(),
+		CreatedAt: time.Now(),
 		Action:    "follow",
 		Receiver:  parentId,
 		Publisher: stuId.(string),

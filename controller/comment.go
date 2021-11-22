@@ -24,7 +24,7 @@ func PublishComment(c *gin.Context) {
 		Publisher: stuId.(string),
 	}
 	tmpMessage := dao.Message{
-		CreateAt:  time.Now(),
+		CreatedAt: time.Now(),
 		Parent:    tmpComment.CommentId,
 		Action:    "comment",
 		Kind:      kind,
