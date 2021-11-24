@@ -1,12 +1,12 @@
 package jwt
 
 import (
-	"fmt"
+	"Moreover/setting"
 	"github.com/dgrijalva/jwt-go"
 	"time"
 )
 
-var jwtKey = []byte("moreover")
+var jwtKey = []byte(setting.Config.JwtKet)
 
 var tokenExpireDuration = time.Hour * 24 * 7
 
@@ -23,10 +23,7 @@ func GenerateToken(stuId string) string {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
-	tokenString, err := token.SignedString(jwtKey)
-	if err != nil {
-		fmt.Printf("tokenSign fail, err: %v\n", err)
-	}
+	tokenString, _ := token.SignedString(jwtKey)
 	return tokenString
 }
 
