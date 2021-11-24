@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var jwtKey = []byte(setting.Config.JwtKet)
+var jwtKey = []byte(setting.Config.JwtKey)
 
 var tokenExpireDuration = time.Hour * 24 * 7
 

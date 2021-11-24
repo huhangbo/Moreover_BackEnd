@@ -15,7 +15,7 @@ type AppConfig struct {
 	StartTime    string `mapstructure:"start_time"`
 	MachineID    int64  `mapstructure:"machine_id"`
 	Port         int    `mapstructure:"port"`
-	JwtKet       string `mapstructure:"jwtKey"`
+	JwtKey       string `mapstructure:"jwtKey"`
 	*LogConfig   `mapstructure:"log"`
 	*MySQLConfig `mapstructure:"mysql"`
 	*RedisConfig `mapstructure:"redis"`
