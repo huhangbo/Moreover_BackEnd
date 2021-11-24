@@ -3,7 +3,7 @@ package controller
 import (
 	"Moreover/conn"
 	"Moreover/pkg/response"
-	"Moreover/service/captcha"
+	"Moreover/service"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -13,7 +13,7 @@ import (
 var uid uuid.UUID
 
 func GenerateCaptcha(c *gin.Context) {
-	id, base64 := captcha.GenerateCaptcha()
+	id, base64 := service.GenerateCaptcha()
 	if id == "" {
 		response.Response(c, response.ERROR, nil)
 		return
@@ -35,7 +35,7 @@ func ParseCaptcha(c *gin.Context) {
 		panic(err)
 		return
 	}
-	if captcha.ParseCaptcha(id, requestId) {
+	if service.ParseCaptcha(id, requestId) {
 		response.Response(c, response.SUCCESS, nil)
 		return
 	}

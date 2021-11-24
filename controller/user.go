@@ -4,7 +4,7 @@ import (
 	"Moreover/dao"
 	"Moreover/pkg/jwt"
 	"Moreover/pkg/response"
-	"Moreover/service/user"
+	"Moreover/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,7 +14,7 @@ func Register(c *gin.Context) {
 		response.Response(c, response.ERROR, nil)
 		return
 	}
-	code := user.Register(tmpUser)
+	code := service.Register(tmpUser)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -31,7 +31,7 @@ func Login(c *gin.Context) {
 		response.Response(c, response.ERROR, nil)
 		return
 	}
-	code := user.Login(tmpUser)
+	code := service.Login(tmpUser)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return

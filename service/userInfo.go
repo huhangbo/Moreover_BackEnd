@@ -1,10 +1,10 @@
-package user
+package service
 
 import (
 	"Moreover/conn"
 	"Moreover/dao"
 	"Moreover/pkg/response"
-	"Moreover/service/util"
+	"Moreover/util"
 	"encoding/json"
 	"time"
 )

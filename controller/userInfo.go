@@ -3,7 +3,7 @@ package controller
 import (
 	"Moreover/dao"
 	"Moreover/pkg/response"
-	"Moreover/service/user"
+	"Moreover/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,7 +15,7 @@ func GetUserInfoById(c *gin.Context) {
 			StudentId: userId,
 		},
 	}
-	code := user.GetUserInfoDetail(&tmpUserDetail, stuId.(string))
+	code := service.GetUserInfoDetail(&tmpUserDetail, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -31,6 +31,6 @@ func UpdateUserInfo(c *gin.Context) {
 	if err := c.BindJSON(&tmpUserInfo); err != nil {
 		response.Response(c, response.ERROR, nil)
 	}
-	code := user.UpdateUserInfo(tmpUserInfo)
+	code := service.UpdateUserInfo(tmpUserInfo)
 	response.Response(c, code, nil)
 }

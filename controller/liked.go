@@ -3,12 +3,8 @@ package controller
 import (
 	"Moreover/dao"
 	"Moreover/pkg/response"
-	"Moreover/service/activity"
-	"Moreover/service/comment"
-	"Moreover/service/liked"
-	"Moreover/service/message"
-	"Moreover/service/post"
-	"Moreover/service/util"
+	"Moreover/service"
+	"Moreover/util"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
@@ -32,7 +28,7 @@ func PublishLike(c *gin.Context) {
 	switch kind {
 	case "activity":
 		tmp := dao.Activity{ActivityId: parentId}
-		if code := activity.GetActivityById(&tmp); code != response.SUCCESS {
+		if code := service.GetActivityById(&tmp); code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
@@ -40,7 +36,7 @@ func PublishLike(c *gin.Context) {
 		tmpMessage.Receiver = tmp.Publisher
 	case "comment":
 		tmp := dao.Comment{CommentId: parentId}
-		if code := comment.GetCommentById(&tmp); code != response.SUCCESS {
+		if code := service.GetCommentById(&tmp); code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
@@ -48,7 +44,7 @@ func PublishLike(c *gin.Context) {
 		tmpMessage.Receiver = tmp.Publisher
 	case "post":
 		tmp := dao.PostDetail{Post: dao.Post{PostId: parentId}}
-		if code := post.GetPostDetail(&tmp, stuId.(string)); code != response.SUCCESS {
+		if code := service.GetPostDetail(&tmp, stuId.(string)); code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
@@ -58,10 +54,10 @@ func PublishLike(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	code := liked.PublishLike(tmpLike)
+	code := service.PublishLike(tmpLike)
 	if code == response.SUCCESS {
-		if err := message.PublishMessage(tmpMessage); err == nil {
-			message.UserMap.PostMessage(&tmpMessage)
+		if err := service.PublishMessage(tmpMessage); err == nil {
+			service.UserMap.PostMessage(&tmpMessage)
 		}
 		_ = util.TopPost(parentId, "liked")
 	}
@@ -72,7 +68,7 @@ func GetLikesByPage(c *gin.Context) {
 	parentId := c.Param("parentId")
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	code, likes, page := liked.GetLikeByPage(current, pageSize, parentId)
+	code, likes, page := service.GetLikeByPage(current, pageSize, parentId)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -90,7 +86,7 @@ func DeleteLike(c *gin.Context) {
 		Parent:    parentId,
 		Publisher: stuId.(string),
 	}
-	code := liked.UnLike(tmpLiked)
+	code := service.UnLike(tmpLiked)
 	if code == response.SUCCESS && c.Param("kind") == "post" {
 		_ = util.TopPost(parentId, "dislike")
 	}

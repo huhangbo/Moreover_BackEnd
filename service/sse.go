@@ -1,4 +1,4 @@
-package message
+package service
 
 import (
 	"Moreover/dao"

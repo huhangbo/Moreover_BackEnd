@@ -3,7 +3,7 @@ package controller
 import (
 	"Moreover/dao"
 	"Moreover/pkg/response"
-	"Moreover/service/activity"
+	"Moreover/service"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"strconv"
@@ -21,7 +21,7 @@ func PublishActivity(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	code := activity.PublishActivity(tmpActivity)
+	code := service.PublishActivity(tmpActivity)
 	response.Response(c, code, nil)
 }
 
@@ -33,7 +33,7 @@ func GetActivityById(c *gin.Context) {
 			ActivityId: activityId,
 		},
 	}
-	code := activity.GetActivityDetailById(&activityDetail, stuId.(string))
+	code := service.GetActivityDetailById(&activityDetail, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
@@ -51,7 +51,7 @@ func UpdateActivity(c *gin.Context) {
 		return
 	}
 	tmpActivity.ActivityId = c.Param("activityId")
-	code := activity.UpdateActivity(tmpActivity)
+	code := service.UpdateActivity(tmpActivity)
 	response.Response(c, code, nil)
 }
 
@@ -61,7 +61,7 @@ func DeleteActivity(c *gin.Context) {
 		ActivityId: c.Param("activityId"),
 		Publisher:  stuId.(string),
 	}
-	code := activity.DeleteActivity(tmpActivity)
+	code := service.DeleteActivity(tmpActivity)
 	response.Response(c, code, nil)
 }
 
@@ -72,7 +72,7 @@ func GetActivityByPage(c *gin.Context) {
 	switch c.Param("type") {
 	case "page":
 		category := c.Query("category")
-		code, activities, page := activity.GetActivitiesByCategory(current, pageSize, stuId.(string), category)
+		code, activities, page := service.GetActivitiesByCategory(current, pageSize, stuId.(string), category)
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return
@@ -82,7 +82,7 @@ func GetActivityByPage(c *gin.Context) {
 			"page":       page,
 		})
 	case "publisher":
-		code, activities, page := activity.GetActivitiesByPublisher(current, pageSize, stuId.(string))
+		code, activities, page := service.GetActivitiesByPublisher(current, pageSize, stuId.(string))
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return

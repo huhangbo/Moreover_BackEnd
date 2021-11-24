@@ -3,11 +3,8 @@ package controller
 import (
 	"Moreover/dao"
 	"Moreover/pkg/response"
-	"Moreover/service/activity"
-	"Moreover/service/comment"
-	"Moreover/service/message"
-	"Moreover/service/post"
-	"Moreover/service/util"
+	"Moreover/service"
+	"Moreover/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"strconv"
@@ -38,7 +35,7 @@ func PublishComment(c *gin.Context) {
 	switch kind {
 	case "activity":
 		tmpKind := dao.Activity{ActivityId: ParentId}
-		code := activity.GetActivityById(&tmpKind)
+		code := service.GetActivityById(&tmpKind)
 		if code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
@@ -46,7 +43,7 @@ func PublishComment(c *gin.Context) {
 		replier = tmpKind.Publisher
 	case "post":
 		tmpKind := dao.PostDetail{Post: dao.Post{PostId: ParentId}}
-		code := post.GetPostDetail(&tmpKind, stuId.(string))
+		code := service.GetPostDetail(&tmpKind, stuId.(string))
 		if code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
@@ -56,7 +53,7 @@ func PublishComment(c *gin.Context) {
 		}
 	case "child":
 		tmpKind := dao.Comment{CommentId: ParentId}
-		code := comment.GetCommentById(&tmpKind)
+		code := service.GetCommentById(&tmpKind)
 		if code != response.SUCCESS {
 			response.Response(c, response.ParamError, nil)
 			return
@@ -69,10 +66,10 @@ func PublishComment(c *gin.Context) {
 	tmpComment.Replier = replier
 	tmpMessage.Receiver = replier
 	tmpMessage.Detail = tmpComment.Message
-	if err := message.PublishMessage(tmpMessage); err == nil {
-		message.UserMap.PostMessage(&tmpMessage)
+	if err := service.PublishMessage(tmpMessage); err == nil {
+		service.UserMap.PostMessage(&tmpMessage)
 	}
-	code := comment.PublishComment(tmpComment)
+	code := service.PublishComment(tmpComment)
 	response.Response(c, code, nil)
 }
 
@@ -85,7 +82,7 @@ func DeleteComment(c *gin.Context) {
 	tmpComment := dao.Comment{
 		CommentId: c.Param("commentId"),
 	}
-	code := comment.DeleteComment(tmpComment, stuId.(string))
+	code := service.DeleteComment(tmpComment, stuId.(string))
 	response.Response(c, code, nil)
 }
 
@@ -98,7 +95,7 @@ func GetCommentsByPage(c *gin.Context) {
 	switch kind {
 	case "parent":
 		{
-			code, comments, tmpPage := comment.GetCommentByIdPage(current, pageSize, parentId, stuId.(string))
+			code, comments, tmpPage := service.GetCommentByIdPage(current, pageSize, parentId, stuId.(string))
 			if code != response.SUCCESS {
 				response.Response(c, code, nil)
 				return
@@ -110,7 +107,7 @@ func GetCommentsByPage(c *gin.Context) {
 		}
 	case "child":
 		{
-			code, comments, tmpPage := comment.GetCommentChildrenByPage(current, pageSize, parentId, stuId.(string))
+			code, comments, tmpPage := service.GetCommentChildrenByPage(current, pageSize, parentId, stuId.(string))
 			if code != response.SUCCESS {
 				response.Response(c, code, nil)
 				return

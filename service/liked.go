@@ -1,13 +1,32 @@
-package liked
+package service
 
 import (
 	"Moreover/conn"
 	"Moreover/dao"
 	"Moreover/model"
 	"Moreover/pkg/response"
-	"Moreover/service/user"
-	"Moreover/service/util"
+	"Moreover/util"
 )
+
+func PublishLike(liked dao.Liked) int {
+	if err := conn.MySQL.Create(&liked).Error; err != nil {
+		return response.FAIL
+	}
+	if !util.PublishSortRedis(liked.Publisher, float64(liked.CreatedAt.Unix()), "liked:sort:"+liked.Parent) {
+		return response.FAIL
+	}
+	return response.SUCCESS
+}
+
+func UnLike(liked dao.Liked) int {
+	if err := conn.MySQL.Delete(&dao.Liked{}, "parent = ? AND publisher = ?", liked.Parent, liked.Publisher).Error; err != nil {
+		return response.PasswordError
+	}
+	if _, err := conn.Redis.ZRem("liked:sort:"+liked.Parent, liked.Publisher).Result(); err != nil {
+		return response.FAIL
+	}
+	return response.SUCCESS
+}
 
 func GetLikeByPage(current, size int, parentId string) (int, []dao.UserInfoBasic, model.Page) {
 	code, total := util.GetTotalById("liked", parentId, "parent")
@@ -26,6 +45,6 @@ func GetLikeByPage(current, size int, parentId string) (int, []dao.UserInfoBasic
 			return response.FAIL, tmpBasic, tmpPage
 		}
 	}
-	code, tmpBasic = user.GetKindDetail(likes)
+	code, tmpBasic = GetKindDetail(likes)
 	return code, tmpBasic, tmpPage
 }
