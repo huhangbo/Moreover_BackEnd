@@ -19,17 +19,17 @@ type Comment struct {
 
 type CommentDetail struct {
 	Comment
-	PublisherInfo UserInfoBasic
-	Star          int  `json:"star"`
-	IsStart       bool `json:"isStart"`
+	PublisherInfo UserInfoBasic `json:"publisherInfo"`
+	Star          int           `json:"star"`
+	IsStart       bool          `json:"isStart"`
 }
 
 type CommentChild struct {
 	CommentDetail
-	ReplierInfo UserInfoBasic
+	ReplierInfo UserInfoBasic `json:"replierInfo"`
 }
 
 type ParentComment struct {
 	CommentDetail
-	Page model.Page
+	Page model.Page `json:"page"`
 }

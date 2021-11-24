@@ -70,7 +70,7 @@ func PublishComment(c *gin.Context) {
 	tmpMessage.Receiver = replier
 	tmpMessage.Detail = tmpComment.Message
 	if err := message.PublishMessage(tmpMessage); err == nil {
-		go message.UserMap.PostMessage(&tmpMessage)
+		message.UserMap.PostMessage(&tmpMessage)
 	}
 	code := comment.PublishComment(tmpComment)
 	response.Response(c, code, nil)

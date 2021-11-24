@@ -11,7 +11,7 @@ type UserInfo struct {
 	UpdatedAt   time.Time             `json:"-"`
 	DeletedAt   soft_delete.DeletedAt `json:"-"`
 	StudentId   string                `gorm:"primaryKey"`
-	Nickname    string                `gorm:"default:娶个名字吧"`
+	Nickname    string                `gorm:"default:取个名字吧"`
 	Avatar      string                `gorm:"default:https://moreover-1305054989.cos.ap-nanjing.myqcloud.com/author.jpg"`
 	Sex         string                `gorm:"default:未知"`
 	Description string                `gorm:"default:添加一句话描述自己吧"`

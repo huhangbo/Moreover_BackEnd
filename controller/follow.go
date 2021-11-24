@@ -25,7 +25,7 @@ func Follow(c *gin.Context) {
 	}
 	code := follow.PublishFollow(tmpFollow)
 	if err := message.PublishMessage(tmpMessage); err == nil {
-		go message.UserMap.PostMessage(&tmpMessage)
+		message.UserMap.PostMessage(&tmpMessage)
 	}
 	response.Response(c, code, nil)
 }

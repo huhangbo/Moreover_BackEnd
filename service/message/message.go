@@ -3,9 +3,13 @@ package message
 import (
 	"Moreover/conn"
 	"Moreover/dao"
+	"errors"
 )
 
 func PublishMessage(message dao.Message) error {
+	if message.Publisher == message.Receiver {
+		return errors.New("repeat")
+	}
 	return conn.MySQL.Create(&message).Error
 }
 
