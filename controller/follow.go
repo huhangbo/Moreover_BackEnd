@@ -55,10 +55,10 @@ func GetFollowByPage(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 		return
 	}
-	code, follows, tmpPage := service.GetFollowById(current, pageSize, id, followType, tmp)
+	code, follows, isEnd := service.GetFollowById(current, pageSize, id, followType, tmp)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
 	}
-	response.Response(c, code, gin.H{"followers": follows, "page": tmpPage})
+	response.Response(c, code, gin.H{"followers": follows, "isEnd": isEnd})
 }

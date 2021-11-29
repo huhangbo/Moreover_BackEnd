@@ -68,14 +68,14 @@ func GetLikesByPage(c *gin.Context) {
 	parentId := c.Param("parentId")
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	code, likes, page := service.GetLikeByPage(current, pageSize, parentId)
+	code, likes, isEnd := service.GetLikeByPage(current, pageSize, parentId)
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
 	}
 	response.Response(c, code, gin.H{
 		"likes": likes,
-		"page":  page,
+		"isEnd": isEnd,
 	})
 }
 

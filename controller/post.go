@@ -50,34 +50,34 @@ func GetPostByPage(c *gin.Context) {
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
 	switch c.Param("type") {
 	case "page":
-		code, posts, tmpPage := service.GetPostByPage(current, pageSize, stuId.(string))
+		code, posts, isEnd := service.GetPostByPage(current, pageSize, stuId.(string))
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return
 		}
 		response.Response(c, code, gin.H{
 			"posts": posts,
-			"page":  tmpPage,
+			"isEnd": isEnd,
 		})
 	case "publisher":
-		code, posts, tmpPage := service.GetPostByPublisher(current, pageSize, stuId.(string))
+		code, posts, isEnd := service.GetPostByPublisher(current, pageSize, stuId.(string))
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return
 		}
 		response.Response(c, code, gin.H{
 			"posts": posts,
-			"page":  tmpPage,
+			"isEnd": isEnd,
 		})
 	case "top":
-		code, posts, tmpPage := service.GetPostByTop(current, pageSize, stuId.(string))
+		code, posts, isEnd := service.GetPostByTop(current, pageSize, stuId.(string))
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return
 		}
 		response.Response(c, code, gin.H{
 			"posts": posts,
-			"page":  tmpPage,
+			"isEnd": isEnd,
 		})
 	default:
 		response.Response(c, response.ParamError, nil)
@@ -88,7 +88,7 @@ func GetFollowPostByPage(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
-	code, isEnd, posts := service.GetFollowPost(current, pageSize, stuId.(string))
+	code, posts, isEnd := service.GetFollowPost(current, pageSize, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return

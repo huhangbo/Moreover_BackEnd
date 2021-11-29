@@ -2,16 +2,16 @@ package router
 
 import (
 	"Moreover/controller"
-	"Moreover/middleware/auth"
+	"Moreover/middleware"
 )
 
 func likeRouter() {
 	r := Router.Group("/liked")
 	{
-		r.POST("/:kind/:parentId", auth.Auth(), controller.PublishLike)
+		r.POST("/:kind/:parentId", middleware.Auth(), controller.PublishLike)
 
 		r.GET("/:parentId/:current/:pageSize", controller.GetLikesByPage)
 
-		r.DELETE("/:kind/:parentId", auth.Auth(), controller.DeleteLike)
+		r.DELETE("/:kind/:parentId", middleware.Auth(), controller.DeleteLike)
 	}
 }

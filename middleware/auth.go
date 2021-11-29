@@ -1,4 +1,4 @@
-package auth
+package middleware
 
 import (
 	"Moreover/pkg/jwt"

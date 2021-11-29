@@ -3,9 +3,8 @@ package service
 import (
 	"Moreover/conn"
 	"Moreover/dao"
-	"Moreover/model"
 	"Moreover/pkg/response"
-	util2 "Moreover/util"
+	"Moreover/util"
 	"encoding/json"
 	"github.com/go-redis/redis"
 	"time"
@@ -17,10 +16,11 @@ const (
 )
 
 func PublishPost(post dao.Post) int {
-	post.Picture = util2.ArrayToString(post.Pictures)
+	post.Picture = util.ArrayToString(post.Pictures)
 	if err := conn.MySQL.Create(&post).Error; err != nil {
 		return response.FAIL
 	}
+	post.PublishedAt = post.CreatedAt.Unix()
 	key := "post:id:" + post.PostId
 	postJson, _ := json.Marshal(post)
 	pipe := conn.Redis.Pipeline()
@@ -40,7 +40,7 @@ func UpdatePost(post dao.Post) int {
 	if err := conn.MySQL.Model(&dao.Post{}).Where("post_id = ?", post.PostId).First(&post).Error; err != nil {
 		return response.ERROR
 	}
-	post.Pictures = util2.StringToArray(post.Picture)
+	post.Pictures = util.StringToArray(post.Picture)
 	key := "post:id:" + post.PostId
 	postJson, _ := json.Marshal(post)
 	if _, err := conn.Redis.Set(key, string(postJson), postExpiration).Result(); err != nil {
@@ -59,7 +59,7 @@ func DeletePost(post dao.Post) int {
 	}
 	key := "post:id:" + post.PostId
 	keyTop := "post:sort:top"
-	if !util2.DeleteSortRedis(post.PostId, key, sortPostKey, keyTop) {
+	if !dao.DeleteSortRedis(post.PostId, key, sortPostKey, keyTop) {
 		return response.FAIL
 	}
 	return response.SUCCESS
@@ -73,7 +73,8 @@ func GetPost(post *dao.Post) int {
 		if err := conn.MySQL.Model(dao.Post{}).Where("post_id = ?", post.PostId).First(post).Error; err != nil {
 			return response.FAIL
 		}
-		post.Pictures = util2.StringToArray(post.Picture)
+		post.Pictures = util.StringToArray(post.Picture)
+		post.PublishedAt = post.CreatedAt.Unix()
 		postJson, _ := json.Marshal(post)
 		if _, err := conn.Redis.Set(key, string(postJson), postExpiration).Result(); err != nil {
 			return response.FAIL
@@ -86,14 +87,14 @@ func GetPostDetail(detail *dao.PostDetail, stuId string) int {
 	if code := GetPost(&detail.Post); code != response.SUCCESS {
 		return code
 	}
-	_, detail.Star, detail.IsStar = util2.GetTotalAndIs("liked", detail.PostId, "parent", stuId)
-	_, detail.Comments = util2.GetTotalById("comment", detail.PostId, "parent_id")
+	_, detail.Star, detail.IsStar = util.GetTotalAndIs("liked", detail.PostId, "parent", stuId)
+	_, detail.Comments = util.GetTotalById("comment", detail.PostId, "parent_id")
 	detail.PublisherInfo.StudentId = detail.Publisher
 	GetUserInfoBasic(&(detail.PublisherInfo))
 	return response.SUCCESS
 }
 
-func GetFollowPost(current, size int, stuId string) (int, bool, []dao.PostDetail) {
+func GetFollowPost(current, size int, stuId string) (int, []dao.PostDetail, bool) {
 	var (
 		posts   []dao.PostDetail
 		postIds []string
@@ -101,10 +102,10 @@ func GetFollowPost(current, size int, stuId string) (int, bool, []dao.PostDetail
 	)
 	err, followers := GetTotalFollow(stuId)
 	if err != nil {
-		return response.ParamError, isEnd, posts
+		return response.ParamError, nil, isEnd
 	}
 	if err := conn.MySQL.Model(dao.Post{}).Where("publisher IN ?", followers).Select("post_id").Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&postIds).Error; err != nil {
-		return response.FAIL, isEnd, posts
+		return response.FAIL, nil, isEnd
 	}
 	if len(postIds) < size {
 		isEnd = true
@@ -112,85 +113,93 @@ func GetFollowPost(current, size int, stuId string) (int, bool, []dao.PostDetail
 	for i := 0; i < len(postIds); i++ {
 		tmpPost := dao.PostDetail{Post: dao.Post{PostId: postIds[i]}}
 		if code := GetPostDetail(&tmpPost, stuId); code != response.SUCCESS {
-			return response.FAIL, isEnd, posts
+			return response.FAIL, nil, isEnd
 		}
 		posts = append(posts, tmpPost)
 	}
-	return response.SUCCESS, isEnd, posts
+	return response.SUCCESS, posts, isEnd
 }
 
-func GetPostByPage(current, size int, stuId string) (int, []dao.PostDetail, model.Page) {
+func GetPostByPage(current, size int, stuId string) (int, []dao.PostDetail, bool) {
 	var (
-		posts   []dao.PostDetail
-		tmpPage model.Page
+		posts []dao.PostDetail
+		isEnd bool
 	)
-	total, _ := conn.Redis.ZCard(sortPostKey).Result()
-	if total == 0 {
-		var (
-			tmpIds []struct {
-				PostId    string
-				CreatedAt time.Time
-			}
-			tmpZs []redis.Z
-		)
-		if err := conn.MySQL.Model(&dao.Post{}).Find(&tmpIds).Error; err != nil {
-			return response.ERROR, posts, tmpPage
-		}
-		total = int64(len(tmpIds))
-		pipe := conn.Redis.Pipeline()
-		for i := 0; i < len(tmpIds); i++ {
-			tmpZs = append(tmpZs, redis.Z{Member: tmpIds[i], Score: float64(tmpIds[i].CreatedAt.Unix())})
-		}
-		pipe.ZAdd(sortPostKey, tmpZs...)
-		if _, err := pipe.Exec(); err != nil {
-			return response.ERROR, posts, tmpPage
+	ids := conn.Redis.ZRevRange("post:sort:", int64((current-1)*size), int64(current*size)-1).Val()
+	if len(ids) == 0 && current == 1 {
+		wg.Add(1)
+		go syncPostToRedis()
+		if err := conn.MySQL.Model(&dao.Post{}).Select("post_id").Find(&ids).Limit(size).Offset((current - 1) * size).Error; err != nil {
+			return response.FAIL, nil, isEnd
 		}
 	}
-	tmpPage = model.Page{Current: current, PageSize: size, Total: int(total), TotalPage: int(total)/size + 1}
-	if int(total) < (current-1)*size {
-		return response.ERROR, posts, tmpPage
+	if len(ids) < size {
+		isEnd = true
 	}
-	_, postIds := util2.GetIdsByPageFromRedis(current, size, "", "post")
-	for _, item := range postIds {
+	for _, item := range ids {
 		tmpDetail := dao.PostDetail{Post: dao.Post{PostId: item}}
 		GetPostDetail(&tmpDetail, stuId)
 		posts = append(posts, tmpDetail)
 	}
-	return response.SUCCESS, posts, tmpPage
+	wg.Wait()
+	return response.SUCCESS, posts, isEnd
 }
 
-func GetPostByPublisher(current, size int, stuId string) (int, []dao.Post, model.Page) {
+func GetPostByPublisher(current, size int, stuId string) (int, []dao.Post, bool) {
 	var (
-		posts   []dao.Post
-		postIds []string
-		total   int64
+		posts []dao.Post
+		ids   []string
+		isEnd bool
 	)
-	if err := conn.MySQL.Model(&dao.Post{}).Where("publisher = ?", stuId).Count(&total).Error; err != nil {
-		return response.FAIL, posts, model.Page{}
+	if err := conn.MySQL.Model(&dao.Post{}).Select("post_id").Where("publisher = ?", stuId).Limit(size).Offset((current - 1) * size).Order("created_at desc").Find(&ids).Error; err != nil {
+		return response.FAIL, nil, isEnd
 	}
-	tmpPage := model.Page{Current: current, PageSize: size, Total: int(total), TotalPage: int(total)/size + 1}
-	if err := conn.MySQL.Model(&dao.Post{}).Select("post_id").Where("publisher = ?", stuId).Limit(size).Offset((current - 1) * size).Order("created_at desc").Find(&postIds).Error; err != nil {
-		return response.FAIL, posts, tmpPage
+	if len(ids) < size {
+		isEnd = true
 	}
-	for i := 0; i < len(postIds); i++ {
-		tmpPost := dao.Post{PostId: postIds[i]}
-		GetPost(&tmpPost)
+	for i := 0; i < len(ids); i++ {
+		tmpPost := dao.Post{PostId: ids[i]}
+		if code := GetPost(&tmpPost); code != response.SUCCESS {
+			return response.FAIL, nil, isEnd
+		}
 		posts = append(posts, tmpPost)
 	}
-	return response.SUCCESS, posts, tmpPage
+	return response.SUCCESS, posts, isEnd
 }
-func GetPostByTop(current, size int, stuId string) (int, []dao.PostDetail, model.Page) {
-	var posts []dao.PostDetail
-	total, _ := conn.Redis.ZCard(sortPostKey).Result()
-	tmpPage := model.Page{Current: current, PageSize: size, Total: int(total), TotalPage: int(total)/size + 1}
-	if int(total) < (current-1)*size {
-		return response.ERROR, posts, tmpPage
-	}
-	_, postIds := util2.GetIdsByPageFromRedis(current, size, "top", "post")
-	for _, item := range postIds {
+
+func GetPostByTop(current, size int, stuId string) (int, []dao.PostDetail, bool) {
+	var (
+		posts []dao.PostDetail
+		isEnd bool
+	)
+	ids := conn.Redis.ZRevRange("post:top:", int64((current-1)*size), int64(current*size)-1).Val()
+	for _, item := range ids {
 		tmpDetail := dao.PostDetail{Post: dao.Post{PostId: item}}
-		GetPostDetail(&tmpDetail, stuId)
+		if code := GetPostDetail(&tmpDetail, stuId); code != response.SUCCESS {
+			return code, nil, isEnd
+		}
 		posts = append(posts, tmpDetail)
 	}
-	return response.SUCCESS, posts, tmpPage
+	if len(ids) < size {
+		isEnd = true
+	}
+	return response.SUCCESS, posts, isEnd
+}
+
+func syncPostToRedis() {
+	defer wg.Done()
+	var (
+		tmpIds []struct {
+			PostId    string
+			CreatedAt time.Time
+		}
+		tmpZs []redis.Z
+	)
+	if err := conn.MySQL.Model(&dao.Post{}).Find(&tmpIds).Error; err != nil {
+		return
+	}
+	for i := 0; i < len(tmpIds); i++ {
+		tmpZs = append(tmpZs, redis.Z{Member: tmpIds[i], Score: float64(tmpIds[i].CreatedAt.Unix())})
+	}
+	conn.Redis.ZAdd(sortPostKey, tmpZs...)
 }

@@ -2,11 +2,11 @@ package router
 
 import (
 	"Moreover/controller"
-	"Moreover/middleware/auth"
+	"Moreover/middleware"
 )
 
 func messageRouter() {
-	r := Router.Group("/message").Use(auth.Auth())
+	r := Router.Group("/message").Use(middleware.Auth())
 	{
 		r.GET("/connect", controller.HandleSSE)
 

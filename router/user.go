@@ -2,7 +2,7 @@ package router
 
 import (
 	"Moreover/controller"
-	"Moreover/middleware/auth"
+	"Moreover/middleware"
 )
 
 func userRouter() {
@@ -12,8 +12,8 @@ func userRouter() {
 
 		r.POST("/login", controller.Login)
 
-		r.GET("/info/:userId", auth.Auth(), controller.GetUserInfoById)
+		r.GET("/info/:userId", middleware.Auth(), controller.GetUserInfoById)
 
-		r.PATCH("/:info", auth.Auth(), controller.UpdateUserInfo)
+		r.PATCH("/:info", middleware.Auth(), controller.UpdateUserInfo)
 	}
 }

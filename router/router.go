@@ -1,6 +1,7 @@
 package router
 
 import (
+	"Moreover/middleware"
 	"Moreover/setting"
 	"github.com/gin-gonic/gin"
 	"io"
@@ -18,6 +19,8 @@ func InitRouter(port string) {
 	gin.DefaultWriter = io.MultiWriter(f)
 
 	Router = gin.Default()
+
+	Router.Use(middleware.Cors())
 
 	captchaRouter()
 

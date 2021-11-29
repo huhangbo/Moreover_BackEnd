@@ -3,7 +3,6 @@ package service
 import (
 	"Moreover/conn"
 	"Moreover/dao"
-	"Moreover/model"
 	"Moreover/pkg/response"
 	"Moreover/util"
 	"encoding/json"
@@ -16,7 +15,7 @@ func PublishComment(comment dao.Comment) int {
 	if err := conn.MySQL.Create(&comment).Error; err != nil {
 		return response.FAIL
 	}
-	if !util.PublishSortRedis(comment.CommentId, float64(comment.CreatedAt.Unix()), "comment:sort:"+comment.ParentId) {
+	if !dao.PublishSortRedis(comment.CommentId, float64(comment.CreatedAt.Unix()), "comment:sort:"+comment.ParentId) {
 		return response.FAIL
 	}
 	publishCommentToRedis(comment)
@@ -80,38 +79,28 @@ func getCommentByIdFromRedis(comment *dao.Comment) int {
 	}
 	return response.SUCCESS
 }
-func GetCommentByIdPage(current, size int, parentId, stuId string) (int, []dao.CommentDetail, model.Page) {
-	code, total := util.GetTotalById("comment", parentId, "parent_id")
-	if code == response.NotFound {
-		SyncCommentSortRedis(parentId)
+func GetCommentByIdPage(current, size int, parentId, stuId string) (int, []dao.CommentDetail, bool) {
+	var (
+		isEnd          bool
+		commentsDetail []dao.CommentDetail
+	)
+	ids := conn.Redis.ZRevRange("comment:sort:"+parentId, int64((current-1)*size), int64(current*size)-1).Val()
+	if len(ids) == 0 {
+		wg.Add(1)
+		go SyncCommentSortRedis(parentId)
+		if err := conn.MySQL.Model(&dao.Comment{}).Select("comment_id").Where("parent_id = ?", parentId).Limit(size).Offset((current - 1) * size).Find(&ids); err != nil {
+			return response.FAIL, nil, isEnd
+		}
 	}
-	var commentsDetail []dao.CommentDetail
-	var commentIds []string
-	var tmpPage = model.Page{
-		Current:   current,
-		PageSize:  size,
-		Total:     total,
-		TotalPage: (total / size) + 1,
-	}
-	if total == 0 {
-		return response.SUCCESS, commentsDetail, tmpPage
-	}
-	if (current-1)*size > total {
-		return response.ParamError, commentsDetail, tmpPage
-	}
-	code, commentIds = util.GetIdsByPageFromRedis(current, size, parentId, "comment")
-	if code != response.SUCCESS || (len(commentIds) == 0 && code == 200) {
-		conn.MySQL.Model(&dao.Comment{}).Select("comment_id").Where("parent_id = ?", parentId).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&commentIds)
-	}
-	for i := 0; i < len(commentIds); i++ {
+	for i := 0; i < len(ids); i++ {
 		tmpCommentDetail := dao.CommentDetail{
 			Comment: dao.Comment{
-				CommentId: commentIds[i],
+				CommentId: ids[i],
 			},
 		}
-		code = GetCommentById(&(tmpCommentDetail.Comment))
+		code := GetCommentById(&(tmpCommentDetail.Comment))
 		if code != response.SUCCESS {
-			return code, commentsDetail, tmpPage
+			return code, nil, isEnd
 		}
 		tmpCommentDetail.PublisherInfo = dao.UserInfoBasic{
 			StudentId: tmpCommentDetail.Publisher,
@@ -120,12 +109,16 @@ func GetCommentByIdPage(current, size int, parentId, stuId string) (int, []dao.C
 		_, tmpCommentDetail.Star, tmpCommentDetail.IsStart = util.GetTotalAndIs("liked", tmpCommentDetail.CommentId, "parent_id", stuId)
 		commentsDetail = append(commentsDetail, tmpCommentDetail)
 	}
-	return response.SUCCESS, commentsDetail, tmpPage
+	if len(ids) < size {
+		isEnd = true
+	}
+	wg.Wait()
+	return response.SUCCESS, commentsDetail, isEnd
 }
 
-func GetCommentChildrenByPage(current, size int, commentId, stuId string) (int, []dao.CommentChild, model.Page) {
+func GetCommentChildrenByPage(current, size int, commentId, stuId string) (int, []dao.CommentChild, bool) {
 	var commentChildren []dao.CommentChild
-	code, childrenDetail, tmpPage := GetCommentByIdPage(current, size, commentId, stuId)
+	code, childrenDetail, isEnd := GetCommentByIdPage(current, size, commentId, stuId)
 	for _, item := range childrenDetail {
 		tmpCommentChild := dao.CommentChild{
 			CommentDetail: item,
@@ -136,16 +129,17 @@ func GetCommentChildrenByPage(current, size int, commentId, stuId string) (int, 
 		GetUserInfoBasic(&(tmpCommentChild.ReplierInfo))
 		commentChildren = append(commentChildren, tmpCommentChild)
 	}
-	return code, commentChildren, tmpPage
+	return code, commentChildren, isEnd
 }
 
 func SyncCommentSortRedis(parentId string) {
+	defer wg.Done()
 	var comments []dao.Comment
 	if err := conn.MySQL.Where("parent_id = ?", parentId).Find(&comments).Error; err != nil {
 		return
 	}
 	for _, item := range comments {
 		sortKey := "comment:sort:" + item.ParentId
-		util.PublishSortRedis(item.CommentId, float64(item.UpdatedAt.Unix()), sortKey)
+		dao.PublishSortRedis(item.CommentId, float64(item.UpdatedAt.Unix()), sortKey)
 	}
 }

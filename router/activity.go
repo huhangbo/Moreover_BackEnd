@@ -2,12 +2,12 @@ package router
 
 import (
 	"Moreover/controller"
-	"Moreover/middleware/auth"
+	"Moreover/middleware"
 )
 
 func activityRouter() {
 	r := Router.Group("/activity")
-	r.Use(auth.Auth())
+	r.Use(middleware.Auth())
 	{
 		r.GET("/detail/:activityId", controller.GetActivityById)
 

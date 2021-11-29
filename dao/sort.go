@@ -1,4 +1,4 @@
-package util
+package dao
 
 import (
 	"Moreover/conn"

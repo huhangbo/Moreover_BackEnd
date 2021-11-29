@@ -2,11 +2,11 @@ package router
 
 import (
 	"Moreover/controller"
-	"Moreover/middleware/auth"
+	"Moreover/middleware"
 )
 
 func PostRouter() {
-	r := Router.Group("/post", auth.Auth())
+	r := Router.Group("/post", middleware.Auth())
 	{
 		r.POST("/", controller.PublishPost)
 

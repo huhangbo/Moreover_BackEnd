@@ -52,9 +52,9 @@ func GetUserInfoDetail(detail *dao.UserInfoDetail, stuId string) int {
 	return response.SUCCESS
 }
 
-func GetKindDetail(likes []string) (int, []dao.UserInfoBasic) {
+func GetKindDetail(ids []string) (int, []dao.UserInfoBasic) {
 	var likesDetail []dao.UserInfoBasic
-	for _, item := range likes {
+	for _, item := range ids {
 		var tmpUserInfo dao.UserInfoBasic
 		tmpUserInfo.StudentId = item
 		code := GetUserInfoBasic(&tmpUserInfo)

@@ -4,7 +4,6 @@ import (
 	"Moreover/conn"
 	"Moreover/pkg/response"
 	"Moreover/service"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"time"
@@ -30,9 +29,7 @@ func ParseCaptcha(c *gin.Context) {
 	requestId := c.PostForm("captcha")
 	id, err := conn.Redis.Get("captcha:" + uid.String()).Result()
 	if err != nil {
-		fmt.Printf("parse captch from redis fail, err: %v\n", err)
 		response.Response(c, response.ERROR, nil)
-		panic(err)
 		return
 	}
 	if service.ParseCaptcha(id, requestId) {

@@ -72,24 +72,24 @@ func GetActivityByPage(c *gin.Context) {
 	switch c.Param("type") {
 	case "page":
 		category := c.Query("category")
-		code, activities, page := service.GetActivitiesByCategory(current, pageSize, stuId.(string), category)
+		code, activities, isEnd := service.GetActivitiesByCategory(current, pageSize, stuId.(string), category)
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return
 		}
 		response.Response(c, code, gin.H{
 			"activities": activities,
-			"page":       page,
+			"isEnd":      isEnd,
 		})
 	case "publisher":
-		code, activities, page := service.GetActivitiesByPublisher(current, pageSize, stuId.(string))
+		code, activities, isEnd := service.GetActivitiesByPublisher(current, pageSize, stuId.(string))
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return
 		}
 		response.Response(c, code, gin.H{
 			"activities": activities,
-			"page":       page,
+			"isEnd":      isEnd,
 		})
 		return
 	default:

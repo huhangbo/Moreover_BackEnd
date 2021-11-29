@@ -95,26 +95,26 @@ func GetCommentsByPage(c *gin.Context) {
 	switch kind {
 	case "parent":
 		{
-			code, comments, tmpPage := service.GetCommentByIdPage(current, pageSize, parentId, stuId.(string))
+			code, comments, isEnd := service.GetCommentByIdPage(current, pageSize, parentId, stuId.(string))
 			if code != response.SUCCESS {
 				response.Response(c, code, nil)
 				return
 			}
 			response.Response(c, code, gin.H{
 				"comments": comments,
-				"page":     tmpPage,
+				"isEnd":    isEnd,
 			})
 		}
 	case "child":
 		{
-			code, comments, tmpPage := service.GetCommentChildrenByPage(current, pageSize, parentId, stuId.(string))
+			code, comments, isEnd := service.GetCommentChildrenByPage(current, pageSize, parentId, stuId.(string))
 			if code != response.SUCCESS {
 				response.Response(c, code, nil)
 				return
 			}
 			response.Response(c, code, gin.H{
 				"comments": comments,
-				"page":     tmpPage,
+				"isEnd":    isEnd,
 			})
 		}
 	default:

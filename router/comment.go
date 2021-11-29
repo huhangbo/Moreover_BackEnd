@@ -2,12 +2,12 @@ package router
 
 import (
 	"Moreover/controller"
-	"Moreover/middleware/auth"
+	"Moreover/middleware"
 )
 
 func commentRouter() {
 	r := Router.Group("/comment")
-	r.Use(auth.Auth())
+	r.Use(middleware.Auth())
 	{
 		r.POST("/:kind/:parentId", controller.PublishComment)
 
