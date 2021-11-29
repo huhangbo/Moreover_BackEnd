@@ -40,6 +40,7 @@ func PublishComment(c *gin.Context) {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
+		tmpComment.Kind = kind
 		replier = tmpKind.Publisher
 	case "post":
 		tmpKind := dao.PostDetail{Post: dao.Post{PostId: ParentId}}
@@ -48,6 +49,7 @@ func PublishComment(c *gin.Context) {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
+		tmpComment.Kind = kind
 		if err := util.TopPost(ParentId, "comment"); err != nil {
 			return
 		}
@@ -58,6 +60,7 @@ func PublishComment(c *gin.Context) {
 			response.Response(c, response.ParamError, nil)
 			return
 		}
+		tmpComment.Kind = tmpKind.Kind
 		replier = tmpKind.Publisher
 	default:
 		response.Response(c, response.ParamError, nil)
@@ -66,6 +69,9 @@ func PublishComment(c *gin.Context) {
 	tmpComment.Replier = replier
 	tmpMessage.Receiver = replier
 	tmpMessage.Detail = tmpComment.Message
+	if tmpComment.Kind == "post" {
+
+	}
 	if err := service.PublishMessage(tmpMessage); err == nil {
 		service.UserMap.PostMessage(&tmpMessage)
 	}

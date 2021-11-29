@@ -26,15 +26,6 @@ func GetTotalById(kind, parentId, parent string) (int, int) {
 	return response.SUCCESS, int(total)
 }
 
-func GetIdsByPageFromRedis(current, size int, parentId, kind string) (int, []string) {
-	sortKey := kind + ":sort:" + parentId
-	ids, err := conn.Redis.ZRevRange(sortKey, int64((current-1)*size), int64(current*size)-1).Result()
-	if err != nil {
-		return response.NotFound, ids
-	}
-	return response.SUCCESS, ids
-}
-
 func GetTotalAndIs(kind, parentId, parent, publisher string) (int, int, bool) {
 	var (
 		sortKey    = kind + ":sort:" + parentId

@@ -9,8 +9,10 @@ func ArrayToString(tmpArray []string) string {
 }
 
 func StringToArray(tmpString string) []string {
-	var result []string
-	var tmp string
+	var (
+		result []string
+		tmp    string
+	)
 	for _, item := range tmpString {
 		if item == ',' {
 			result = append(result, tmp)

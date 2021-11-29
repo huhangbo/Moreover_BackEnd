@@ -6,6 +6,7 @@ import (
 	"Moreover/pkg/response"
 	"Moreover/util"
 	"encoding/json"
+	"github.com/go-redis/redis"
 	"time"
 )
 
@@ -15,9 +16,8 @@ func PublishComment(comment dao.Comment) int {
 	if err := conn.MySQL.Create(&comment).Error; err != nil {
 		return response.FAIL
 	}
-	if !dao.PublishSortRedis(comment.CommentId, float64(comment.CreatedAt.Unix()), "comment:sort:"+comment.ParentId) {
-		return response.FAIL
-	}
+	comment.PublishedAt = comment.CreatedAt.Unix()
+	conn.Redis.ZAdd(comment.CommentId, redis.Z{Score: float64(comment.PublishedAt), Member: "comment:sort:" + comment.ParentId})
 	publishCommentToRedis(comment)
 	return response.SUCCESS
 }
@@ -30,6 +30,7 @@ func publishCommentToRedis(comment dao.Comment) int {
 	}
 	return response.SUCCESS
 }
+
 func DeleteComment(comment dao.Comment, stuId string) int {
 	code := GetCommentById(&comment)
 	if code != response.SUCCESS {
@@ -63,6 +64,7 @@ func GetCommentById(comment *dao.Comment) int {
 		if err := conn.MySQL.Where("comment_id = ?", comment.CommentId).First(comment).Error; err != nil {
 			return response.FAIL
 		}
+		comment.PublishedAt = comment.CreatedAt.Unix()
 		publishCommentToRedis(*comment)
 		return response.SUCCESS
 	}
@@ -79,16 +81,17 @@ func getCommentByIdFromRedis(comment *dao.Comment) int {
 	}
 	return response.SUCCESS
 }
+
 func GetCommentByIdPage(current, size int, parentId, stuId string) (int, []dao.CommentDetail, bool) {
 	var (
-		isEnd          bool
 		commentsDetail []dao.CommentDetail
+		isEnd          bool
 	)
-	ids := conn.Redis.ZRevRange("comment:sort:"+parentId, int64((current-1)*size), int64(current*size)-1).Val()
+	ids := conn.Redis.ZRevRange("comment:sort:"+parentId, int64((current-1)*size), int64(current*size-1)).Val()
 	if len(ids) == 0 {
 		wg.Add(1)
 		go SyncCommentSortRedis(parentId)
-		if err := conn.MySQL.Model(&dao.Comment{}).Select("comment_id").Where("parent_id = ?", parentId).Limit(size).Offset((current - 1) * size).Find(&ids); err != nil {
+		if err := conn.MySQL.Model(&dao.Comment{}).Select("comment_id").Where("parent_id = ?", parentId).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&ids).Error; err != nil {
 			return response.FAIL, nil, isEnd
 		}
 	}
@@ -98,8 +101,7 @@ func GetCommentByIdPage(current, size int, parentId, stuId string) (int, []dao.C
 				CommentId: ids[i],
 			},
 		}
-		code := GetCommentById(&(tmpCommentDetail.Comment))
-		if code != response.SUCCESS {
+		if code := GetCommentById(&(tmpCommentDetail.Comment)); code != response.SUCCESS {
 			return code, nil, isEnd
 		}
 		tmpCommentDetail.PublisherInfo = dao.UserInfoBasic{
@@ -134,12 +136,18 @@ func GetCommentChildrenByPage(current, size int, commentId, stuId string) (int, 
 
 func SyncCommentSortRedis(parentId string) {
 	defer wg.Done()
-	var comments []dao.Comment
-	if err := conn.MySQL.Where("parent_id = ?", parentId).Find(&comments).Error; err != nil {
+	var (
+		tmpIds []struct {
+			CommentId string
+			CreatedAt time.Time
+		}
+		tmpZs []redis.Z
+	)
+	if err := conn.MySQL.Model(&dao.Comment{}).Select("comment_id AND created_at").Where("parent_id = ?", parentId).Find(&tmpIds).Error; err != nil {
 		return
 	}
-	for _, item := range comments {
-		sortKey := "comment:sort:" + item.ParentId
-		dao.PublishSortRedis(item.CommentId, float64(item.UpdatedAt.Unix()), sortKey)
+	for _, item := range tmpIds {
+		tmpZs = append(tmpZs, redis.Z{Member: item, Score: float64(item.CreatedAt.Unix())})
 	}
+	conn.Redis.ZAdd("comment:sort:"+parentId, tmpZs...)
 }

@@ -26,8 +26,8 @@ func PublishActivity(activity dao.Activity) int {
 	activity.PublishedAt = activity.CreatedAt.Unix()
 	postJson, _ := json.Marshal(activity)
 	pipe := conn.Redis.Pipeline()
-	pipe.ZAdd(sortActivityKey, redis.Z{Member: activity.ActivityId, Score: float64(activity.CreatedAt.Unix())})
-	pipe.ZAdd(sortActivityKey+activity.Category, redis.Z{Member: activity.ActivityId, Score: float64(activity.CreatedAt.Unix())})
+	pipe.ZAdd(sortActivityKey, redis.Z{Member: activity.ActivityId, Score: float64(activity.PublishedAt)})
+	pipe.ZAdd(sortActivityKey+activity.Category, redis.Z{Member: activity.ActivityId, Score: float64(activity.PublishedAt)})
 	pipe.Set(key, string(postJson), activityExpiration)
 	if _, err := pipe.Exec(); err != nil {
 		return response.FAIL
