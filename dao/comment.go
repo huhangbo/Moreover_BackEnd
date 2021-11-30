@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"Moreover/model"
 	"gorm.io/plugin/soft_delete"
 	"time"
 )
@@ -30,9 +29,4 @@ type CommentDetail struct {
 type CommentChild struct {
 	CommentDetail
 	ReplierInfo UserInfoBasic `json:"replierInfo"`
-}
-
-type ParentComment struct {
-	CommentDetail
-	Page model.Page `json:"page"`
 }

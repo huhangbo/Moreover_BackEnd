@@ -14,6 +14,6 @@ func userRouter() {
 
 		r.GET("/info/:userId", middleware.Auth(), controller.GetUserInfoById)
 
-		r.PATCH("/:info", middleware.Auth(), controller.UpdateUserInfo)
+		r.PATCH("/info", middleware.Auth(), controller.UpdateUserInfo)
 	}
 }
