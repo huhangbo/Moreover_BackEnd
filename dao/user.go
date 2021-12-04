@@ -5,9 +5,6 @@ import (
 	"time"
 )
 
-type Model interface {
-}
-
 type User struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time

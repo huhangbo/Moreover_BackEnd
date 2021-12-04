@@ -52,7 +52,7 @@ func GetFollowById(current, size int, follower, followType, tmp string) (int, []
 	if len(ids) == 0 {
 		wg.Add(1)
 		go SyncFollowToRedis(follower, followType, tmp)
-		if err := conn.MySQL.Model(&dao.Follow{}).Select(tmp).Where(followType+" = ?", follower).Limit(size).Offset((current - 1) * size).Find(&ids).Order("created_at DESC").Error; err != nil {
+		if err := conn.MySQL.Model(&dao.Follow{}).Select(tmp).Where(followType+" = ?", follower).Limit(size).Offset((current - 1) * size).Find(&ids).Error; err != nil {
 			return response.FAIL, nil, isEnd
 		}
 	}

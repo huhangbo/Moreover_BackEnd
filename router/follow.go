@@ -13,6 +13,5 @@ func followRouter() {
 		r.DELETE("/:parentId", middleware.Auth(), controller.UnFollow)
 
 		r.GET("/:followType/:id/:current/:pageSize", controller.GetFollowByPage)
-
 	}
 }

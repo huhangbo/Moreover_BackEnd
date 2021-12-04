@@ -10,11 +10,11 @@ type UserInfo struct {
 	CreatedAt   time.Time             `json:"-"`
 	UpdatedAt   time.Time             `json:"-"`
 	DeletedAt   soft_delete.DeletedAt `json:"-"`
-	StudentId   string                `gorm:"primaryKey"`
-	Nickname    string                `gorm:"default:取个名字吧"`
-	Avatar      string                `gorm:"default:https://moreover-1305054989.cos.ap-nanjing.myqcloud.com/author.jpg"`
-	Sex         string                `gorm:"default:未知"`
-	Description string                `gorm:"default:添加一句话描述自己吧"`
+	StudentId   string                `gorm:"primaryKey" json:"studentId"`
+	Nickname    string                `gorm:"default:取个名字吧" json:"nickname"`
+	Avatar      string                `gorm:"default:https://moreover-1305054989.cos.ap-nanjing.myqcloud.com/author.jpg" json:"avatar"`
+	Sex         string                `gorm:"default:未知" json:"sex"`
+	Description string                `gorm:"default:添加一句话描述自己吧" json:"description"`
 }
 
 type UserInfoBasic struct {

@@ -10,8 +10,6 @@ type Comment struct {
 	CreatedAt   time.Time             `json:"-"`
 	UpdatedAt   time.Time             `json:"-"`
 	DeletedAt   soft_delete.DeletedAt `json:"-"`
-	Kind        string                `json:"kind"`
-	KindId      string                `json:"kindId"`
 	ParentId    string                `json:"parentId"`
 	CommentId   string                `gorm:"primaryKey" json:"CommentId"`
 	Publisher   string                `json:"publisher"`

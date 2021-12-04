@@ -54,7 +54,7 @@ func DeletePost(post dao.Post) int {
 	if code := GetPost(&tmpPost); code != response.SUCCESS {
 		return code
 	}
-	if err := conn.MySQL.Where("post_id = ? AND publisher = ?", post.PostId, post.Publisher).Delete(&dao.Activity{}).Error; err != nil {
+	if err := conn.MySQL.Where("post_id = ? AND publisher = ?", post.PostId, post.Publisher).Delete(&dao.Post{}).Error; err != nil {
 		return response.FAIL
 	}
 	key := "post:id:" + post.PostId

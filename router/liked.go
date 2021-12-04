@@ -7,11 +7,12 @@ import (
 
 func likeRouter() {
 	r := Router.Group("/liked")
+	r.Use(middleware.Auth())
 	{
-		r.POST("/:kind/:parentId", middleware.Auth(), controller.PublishLike)
+		r.POST("/:kind/:parentId", controller.PublishLike)
 
 		r.GET("/:parentId/:current/:pageSize", controller.GetLikesByPage)
 
-		r.DELETE("/:kind/:parentId", middleware.Auth(), controller.DeleteLike)
+		r.DELETE("/:kind/:parentId", controller.DeleteLike)
 	}
 }

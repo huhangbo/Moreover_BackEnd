@@ -32,6 +32,9 @@ func GetMessageByPage(current, size int, action, stuId string) (error, bool, []d
 	if len(messages) < size {
 		isEnd = true
 	}
+	for i := 0; i < len(messages); i++ {
+		messages[i].PublishedAt = messages[i].CreatedAt.Unix()
+	}
 	return nil, isEnd, messages
 }
 
