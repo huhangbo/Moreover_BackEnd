@@ -22,8 +22,6 @@ func InitRouter(port string) {
 
 	Router.Use(middleware.Cors())
 
-	captchaRouter()
-
 	userRouter()
 
 	activityRouter()

@@ -22,6 +22,5 @@ func InitRedis(config *setting.RedisConfig) {
 }
 
 func RedisClose() {
-	if err := Redis.Close(); err != nil {
-	}
+	_ = Redis.Close()
 }
