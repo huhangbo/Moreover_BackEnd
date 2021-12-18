@@ -96,7 +96,7 @@ func GetActivityDetailById(detail *dao.ActivityDetail, stuId string) int {
 	detail.Activity = tmpActivity
 	detail.PublisherInfo.StudentId = detail.Publisher
 	GetUserInfoBasic(&(detail.PublisherInfo))
-	_, detail.Star, detail.IsStar = util.GetTotalAndIs("liked", detail.ActivityId, "parent_id", stuId)
+	_, detail.Star, detail.IsStar = util.GetTotalAndIs("liked", detail.ActivityId, "parent", stuId)
 	return response.SUCCESS
 }
 
