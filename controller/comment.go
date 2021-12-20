@@ -14,7 +14,7 @@ import (
 func PublishComment(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	ParentId := c.Param("parentId")
-	kind := c.Param("topic")
+	kind := c.Param("kind")
 	tmpComment := dao.Comment{
 		CommentId: uuid.New().String(),
 		ParentId:  ParentId,
