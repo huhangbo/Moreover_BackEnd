@@ -10,6 +10,8 @@ import (
 
 const (
 	timeFollowExpiration = time.Hour * 24 * 7
+	publisherKey         = "publisher:sort:"
+	parentKey            = "parent:sort:"
 )
 
 func PublishFollow(follow dao.Follow) int {
@@ -22,11 +24,11 @@ func PublishFollow(follow dao.Follow) int {
 	if err := conn.MySQL.Create(&follow).Error; err != nil {
 		return response.FAIL
 	}
-	if exist1 := conn.Redis.Exists("publisher:" + follow.Publisher).Val(); exist1 == 1 {
-		conn.Redis.ZAdd("publisher:"+follow.Publisher, redis.Z{Member: follow.Parent, Score: float64(follow.CreatedAt.Unix())})
+	if exist1 := conn.Redis.Exists(publisherKey + follow.Publisher).Val(); exist1 == 1 {
+		conn.Redis.ZAdd(publisherKey+follow.Publisher, redis.Z{Member: follow.Parent, Score: float64(follow.CreatedAt.Unix())})
 	}
-	if exist2 := conn.Redis.Exists("parent:" + follow.Parent).Val(); exist2 == 1 {
-		conn.Redis.ZAdd("parent:"+follow.Parent, redis.Z{Member: follow.Publisher, Score: float64(follow.CreatedAt.Unix())})
+	if exist2 := conn.Redis.Exists(parentKey + follow.Parent).Val(); exist2 == 1 {
+		conn.Redis.ZAdd(parentKey+follow.Parent, redis.Z{Member: follow.Publisher, Score: float64(follow.CreatedAt.Unix())})
 	}
 	return response.SUCCESS
 }
@@ -35,8 +37,8 @@ func Unfollow(follow dao.Follow) int {
 	if err := conn.MySQL.Where("publisher = ? AND parent = ?", follow.Publisher, follow.Parent).Delete(&dao.Follow{}).Error; err != nil {
 		return response.FAIL
 	}
-	keyFollow := "publisher:" + follow.Publisher
-	keyFan := "parent:" + follow.Parent
+	keyFollow := publisherKey + follow.Publisher
+	keyFan := parentKey + follow.Parent
 	pipe := conn.Redis.Pipeline()
 	pipe.ZRem(keyFollow, follow.Parent)
 	pipe.ZRem(keyFan, follow.Publisher)
@@ -48,7 +50,7 @@ func GetFollowById(current, size int, follower, followType, tmp string) (int, []
 	var (
 		isEnd bool
 	)
-	ids, _ := conn.Redis.ZRange(followType+":"+follower, int64((current-1)*size), int64(current*size-1)).Result()
+	ids, _ := conn.Redis.ZRange(followType+":sort:"+follower, int64((current-1)*size), int64(current*size-1)).Result()
 	if len(ids) == 0 {
 		wg.Add(1)
 		go SyncFollowToRedis(follower, followType, tmp)
@@ -65,7 +67,7 @@ func GetFollowById(current, size int, follower, followType, tmp string) (int, []
 }
 
 func GetTotalFollow(follower string) (error, []string) {
-	key := "parent:" + follower
+	key := parentKey + follower
 	followers, _ := conn.Redis.ZRange(key, 0, -1).Result()
 	if len(followers) == 0 {
 		if err := conn.MySQL.Model(&dao.Follow{}).Select("publisher").Find(&followers).Error; err != nil {
@@ -81,7 +83,7 @@ func SyncFollowToRedis(follower, category, tmp string) {
 	if err := conn.MySQL.Model(&dao.Follow{}).Select(tmp, "created_at").Where(category+" = ?", follower).Find(&follows).Error; err != nil {
 		return
 	}
-	key := category + ":" + follower
+	key := category + ":sort:" + follower
 	pipe := conn.Redis.Pipeline()
 	if category == "publisher" {
 		for _, item := range follows {

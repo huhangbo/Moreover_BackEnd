@@ -10,21 +10,25 @@ import (
 	"time"
 )
 
-const commentExpiration = time.Hour * 24 * 7
+const (
+	commentExpiration = time.Hour * 24 * 7
+	commentSortKey    = "comment:sort:"
+	commentIdKey      = "comment:id:"
+)
 
 func PublishComment(comment dao.Comment) int {
 	if err := conn.MySQL.Create(&comment).Error; err != nil {
 		return response.FAIL
 	}
 	comment.PublishedAt = comment.CreatedAt.Unix()
-	conn.Redis.ZAdd(comment.CommentId, redis.Z{Score: float64(comment.PublishedAt), Member: "comment:sort:" + comment.ParentId})
+	conn.Redis.ZAdd(commentSortKey+comment.ParentId, redis.Z{Score: float64(comment.PublishedAt), Member: comment.CommentId})
 	publishCommentToRedis(comment)
 	return response.SUCCESS
 }
 
 func publishCommentToRedis(comment dao.Comment) int {
 	jsonActivity, _ := json.Marshal(comment)
-	key := "comment:id:" + comment.CommentId
+	key := commentIdKey + comment.CommentId
 	if err := conn.Redis.Set(key, string(jsonActivity), commentExpiration); err != nil {
 		return response.FAIL
 	}
@@ -46,9 +50,9 @@ func DeleteComment(comment dao.Comment, stuId string) int {
 }
 
 func deleteCommentFromRedis(comment dao.Comment) int {
-	idKey := "comment:id:" + comment.CommentId
-	sortKey := "comment:sort:" + comment.CommentId
-	sortParentKey := "comment:sort:" + comment.ParentId
+	idKey := commentIdKey + comment.CommentId
+	sortKey := commentSortKey + comment.CommentId
+	sortParentKey := commentSortKey + comment.ParentId
 	pipe := conn.Redis.Pipeline()
 	pipe.Del(idKey)
 	pipe.Del(sortKey)
@@ -72,7 +76,7 @@ func GetCommentById(comment *dao.Comment) int {
 }
 
 func getCommentByIdFromRedis(comment *dao.Comment) int {
-	commentString, err := conn.Redis.Get("comment:id:" + comment.CommentId).Result()
+	commentString, err := conn.Redis.Get(commentIdKey + comment.CommentId).Result()
 	if err != nil || commentString == "" {
 		return response.FAIL
 	}
@@ -87,7 +91,7 @@ func GetCommentByIdPage(current, size int, parentId, stuId string) (int, []dao.C
 		commentsDetail []dao.CommentDetail
 		isEnd          bool
 	)
-	ids := conn.Redis.ZRevRange("comment:sort:"+parentId, int64((current-1)*size), int64(current*size-1)).Val()
+	ids := conn.Redis.ZRevRange(commentSortKey+parentId, int64((current-1)*size), int64(current*size-1)).Val()
 	if len(ids) == 0 {
 		wg.Add(1)
 		go SyncCommentSortRedis(parentId)
@@ -149,5 +153,5 @@ func SyncCommentSortRedis(parentId string) {
 	for _, item := range tmpIds {
 		tmpZs = append(tmpZs, redis.Z{Member: item, Score: float64(item.CreatedAt.Unix())})
 	}
-	conn.Redis.ZAdd("comment:sort:"+parentId, tmpZs...)
+	conn.Redis.ZAdd(commentSortKey+parentId, tmpZs...)
 }
