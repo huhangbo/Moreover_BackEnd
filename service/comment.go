@@ -112,7 +112,7 @@ func GetCommentByIdPage(current, size int, parentId, stuId string) (int, []dao.C
 			StudentId: tmpCommentDetail.Publisher,
 		}
 		GetUserInfoBasic(&(tmpCommentDetail.PublisherInfo))
-		_, tmpCommentDetail.Star, tmpCommentDetail.IsStart = util.GetTotalAndIs("liked", tmpCommentDetail.CommentId, "parent_id", stuId)
+		_, tmpCommentDetail.Star, tmpCommentDetail.IsStar = util.GetTotalAndIs("liked", tmpCommentDetail.CommentId, "parent_id", stuId)
 		commentsDetail = append(commentsDetail, tmpCommentDetail)
 	}
 	if len(ids) < size {

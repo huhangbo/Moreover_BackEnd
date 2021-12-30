@@ -14,6 +14,7 @@ type UserInfo struct {
 	Nickname    string                `gorm:"default:取个名字吧" json:"nickname"`
 	Avatar      string                `gorm:"default:https://moreover-1305054989.cos.ap-nanjing.myqcloud.com/author.jpg" json:"avatar"`
 	Sex         string                `gorm:"default:未知" json:"sex"`
+	Background  string                `gorm:"https://huhangbo.gitee.io/huhangbo-imgs/CUMT/3.JPG" json:"background"`
 	Description string                `gorm:"default:添加一句话描述自己吧" json:"description"`
 }
 

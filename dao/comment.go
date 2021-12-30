@@ -21,7 +21,7 @@ type CommentDetail struct {
 	Comment
 	PublisherInfo UserInfoBasic `json:"publisherInfo"`
 	Star          int           `json:"star"`
-	IsStart       bool          `json:"isStart"`
+	IsStar        bool          `json:"isStar"`
 }
 
 type CommentChild struct {
