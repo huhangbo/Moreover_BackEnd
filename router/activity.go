@@ -18,5 +18,6 @@ func activityRouter() {
 		r.DELETE("/:activityId", controller.DeleteActivity)
 
 		r.GET("/:type/:current/:pageSize", controller.GetActivityByPage)
+
 	}
 }

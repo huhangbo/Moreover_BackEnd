@@ -100,13 +100,13 @@ func GetActivityDetailById(detail *dao.ActivityDetail, stuId string) int {
 	return response.SUCCESS
 }
 
-func GetActivitiesByPublisher(current, size int, stuId string) (int, []dao.ActivityDetail, bool) {
+func GetActivitiesByPublisher(current, size int, stuId, userId string) (int, []dao.ActivityDetail, bool) {
 	var (
 		activities []dao.ActivityDetail
 		ids        []string
 		isEnd      bool
 	)
-	if err := conn.MySQL.Model(&dao.Activity{}).Select("activity_id").Where("publisher = ?", stuId).Limit(size).Offset((current - 1) * size).Order("created_at DESC").Find(&ids).Error; err != nil {
+	if err := conn.MySQL.Model(&dao.Activity{}).Select("activity_id").Where("publisher = ?", userId).Limit(size).Offset((current - 1) * size).Find(&ids).Error; err != nil {
 		return response.FAIL, nil, isEnd
 	}
 	if len(ids) < size {

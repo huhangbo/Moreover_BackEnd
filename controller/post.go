@@ -48,6 +48,7 @@ func GetPostByPage(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
+	userId := c.Param("userId")
 	switch c.Param("type") {
 	case "page":
 		code, posts, isEnd := service.GetPostByPage(current, pageSize, stuId.(string))
@@ -60,7 +61,10 @@ func GetPostByPage(c *gin.Context) {
 			"isEnd": isEnd,
 		})
 	case "publisher":
-		code, posts, isEnd := service.GetPostByPublisher(current, pageSize, stuId.(string))
+		if userId == "" {
+			userId = stuId.(string)
+		}
+		code, posts, isEnd := service.GetPostByPublisher(current, pageSize, stuId.(string), userId)
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return

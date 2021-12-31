@@ -35,7 +35,7 @@ func (t *UserData) SendMessage(message *dao.Message) {
 	for serverId, msgQue := range t.MessageQueue {
 		if len(msgQue) < MsgQueLen {
 			msgQue <- message
-		} else {
+		} else { //可能当前用户已下线channel被阻塞
 			delete(t.MessageQueue, serverId)
 		}
 	}

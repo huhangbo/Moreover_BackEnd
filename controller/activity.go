@@ -69,6 +69,7 @@ func GetActivityByPage(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	current, _ := strconv.Atoi(c.Param("current"))
 	pageSize, _ := strconv.Atoi(c.Param("pageSize"))
+	userId := c.Query("userId")
 	switch c.Param("type") {
 	case "page":
 		category := c.Query("category")
@@ -82,7 +83,10 @@ func GetActivityByPage(c *gin.Context) {
 			"isEnd":      isEnd,
 		})
 	case "publisher":
-		code, activities, isEnd := service.GetActivitiesByPublisher(current, pageSize, stuId.(string))
+		if userId == "" {
+			userId = stuId.(string)
+		}
+		code, activities, isEnd := service.GetActivitiesByPublisher(current, pageSize, stuId.(string), userId)
 		if code != response.SUCCESS {
 			response.Response(c, code, nil)
 			return

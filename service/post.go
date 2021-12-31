@@ -145,21 +145,21 @@ func GetPostByPage(current, size int, stuId string) (int, []dao.PostDetail, bool
 	return response.SUCCESS, posts, isEnd
 }
 
-func GetPostByPublisher(current, size int, stuId string) (int, []dao.Post, bool) {
+func GetPostByPublisher(current, size int, stuId, userId string) (int, []dao.PostDetail, bool) {
 	var (
-		posts []dao.Post
+		posts []dao.PostDetail
 		ids   []string
 		isEnd bool
 	)
-	if err := conn.MySQL.Model(&dao.Post{}).Select("post_id").Where("publisher = ?", stuId).Limit(size).Offset((current - 1) * size).Order("created_at desc").Find(&ids).Error; err != nil {
+	if err := conn.MySQL.Model(&dao.Post{}).Select("post_id").Where("publisher = ?", userId).Limit(size).Offset((current - 1) * size).Order("created_at desc").Find(&ids).Error; err != nil {
 		return response.FAIL, nil, isEnd
 	}
 	if len(ids) < size {
 		isEnd = true
 	}
 	for i := 0; i < len(ids); i++ {
-		tmpPost := dao.Post{PostId: ids[i]}
-		if code := GetPost(&tmpPost); code != response.SUCCESS {
+		tmpPost := dao.PostDetail{Post: dao.Post{PostId: ids[i]}}
+		if code := GetPostDetail(&tmpPost, stuId); code != response.SUCCESS {
 			return response.FAIL, nil, isEnd
 		}
 		posts = append(posts, tmpPost)
