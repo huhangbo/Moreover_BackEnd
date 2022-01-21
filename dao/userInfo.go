@@ -31,3 +31,8 @@ type UserInfoDetail struct {
 	Fan      int  `json:"fan"`
 	IsFollow bool `json:"isFollow"`
 }
+
+type UserInfoBasicFollow struct {
+	UserInfoBasic
+	IsFollow bool `json:"isFollow"`
+}

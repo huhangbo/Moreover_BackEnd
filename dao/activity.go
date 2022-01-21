@@ -29,3 +29,10 @@ type ActivityDetail struct {
 	IsStar        bool          `json:"isStar"`
 	PublisherInfo UserInfoBasic `json:"publisherInfo"`
 }
+
+type ActivityDetailFollow struct {
+	Activity
+	Star          int                 `json:"star"`
+	IsStar        bool                `json:"isStar"`
+	PublisherInfo UserInfoBasicFollow `json:"publisherInfo"`
+}

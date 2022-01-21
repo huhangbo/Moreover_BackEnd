@@ -100,6 +100,20 @@ func GetActivityDetailById(detail *dao.ActivityDetail, stuId string) int {
 	return response.SUCCESS
 }
 
+func GetActivityDetailFollow(detail *dao.ActivityDetailFollow, stuId string) int {
+	tmpActivity := dao.Activity{
+		ActivityId: detail.ActivityId,
+	}
+	if code := GetActivityById(&tmpActivity); code != response.SUCCESS {
+		return response.FAIL
+	}
+	detail.Activity = tmpActivity
+	detail.PublisherInfo.StudentId = detail.Publisher
+	GetUserInfoBasicFollow(&(detail.PublisherInfo), stuId)
+	_, detail.Star, detail.IsStar = util.GetTotalAndIs("liked", detail.ActivityId, "parent", stuId)
+	return response.SUCCESS
+}
+
 func GetActivitiesByPublisher(current, size int, stuId, userId string) (int, []dao.ActivityDetail, bool) {
 	var (
 		activities []dao.ActivityDetail

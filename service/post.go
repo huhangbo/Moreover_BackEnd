@@ -94,6 +94,16 @@ func GetPostDetail(detail *dao.PostDetail, stuId string) int {
 	return response.SUCCESS
 }
 
+func GetPostDetailFollow(detail *dao.PostDetailFollow, stuId string) int {
+	if code := GetPost(&detail.Post); code != response.SUCCESS {
+		return code
+	}
+	_, detail.Star, detail.IsStar = util.GetTotalAndIs("liked", detail.PostId, "parent", stuId)
+	detail.PublisherInfo.StudentId = detail.Publisher
+	GetUserInfoBasicFollow(&(detail.PublisherInfo), stuId)
+	return response.SUCCESS
+}
+
 func GetFollowPost(current, size int, stuId string) (int, []dao.PostDetail, bool) {
 	var (
 		posts   []dao.PostDetail

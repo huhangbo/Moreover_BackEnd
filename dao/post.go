@@ -24,3 +24,10 @@ type PostDetail struct {
 	Comments      int           `json:"comments"`
 	PublisherInfo UserInfoBasic `json:"publisherInfo"`
 }
+
+type PostDetailFollow struct {
+	Post
+	Star          int                 `json:"star"`
+	IsStar        bool                `json:"isStar"`
+	PublisherInfo UserInfoBasicFollow `json:"publisherInfo"`
+}

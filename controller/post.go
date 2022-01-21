@@ -97,3 +97,19 @@ func GetPostByPage(c *gin.Context) {
 		response.Response(c, response.ParamError, nil)
 	}
 }
+
+func GetPostById(c *gin.Context) {
+	stuId, _ := c.Get("stuId")
+	postId := c.Param("postId")
+	PostDetail := dao.PostDetailFollow{
+		Post: dao.Post{
+			PostId: postId,
+		},
+	}
+	code := service.GetPostDetailFollow(&PostDetail, stuId.(string))
+	if code != response.SUCCESS {
+		response.Response(c, code, nil)
+		return
+	}
+	response.Response(c, code, gin.H{"content": PostDetail})
+}

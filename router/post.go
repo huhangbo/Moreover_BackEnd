@@ -12,6 +12,8 @@ func PostRouter() {
 
 		r.GET("/:type/:current/:pageSize", controller.GetPostByPage)
 
+		r.GET("/detail/:postId", controller.GetPostById)
+
 		r.PUT("/:postId", controller.UpdatePost)
 
 		r.DELETE("/:postId", controller.DeletePost)

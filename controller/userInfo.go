@@ -29,7 +29,7 @@ func UpdateUserInfo(c *gin.Context) {
 		StudentId: stuId.(string),
 	}
 	if err := c.BindJSON(&tmpUserInfo); err != nil {
-		response.Response(c, response.ERROR, nil)
+		response.Response(c, response.ParamError, nil)
 	}
 	code := service.UpdateUserInfo(tmpUserInfo)
 	response.Response(c, code, nil)

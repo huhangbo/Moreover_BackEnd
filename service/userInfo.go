@@ -39,6 +39,24 @@ func GetUserInfoBasic(basic *dao.UserInfoBasic) int {
 	return response.SUCCESS
 }
 
+func GetUserInfoBasicFollow(basic *dao.UserInfoBasicFollow, stuId string) int {
+	var userInfo = dao.UserInfo{
+		StudentId: basic.StudentId,
+	}
+	code := GetUserInfo(&userInfo)
+	if code != response.SUCCESS {
+		return code
+	}
+	(*basic).UserInfoBasic = dao.UserInfoBasic{
+		StudentId: userInfo.StudentId,
+		Nickname:  userInfo.Nickname,
+		Avatar:    userInfo.Avatar,
+		Sex:       userInfo.Sex,
+	}
+	_, _, (*basic).IsFollow = util.GetTotalAndIs("parent", (*basic).StudentId, "parent", stuId)
+	return response.SUCCESS
+}
+
 func GetUserInfoDetail(detail *dao.UserInfoDetail, stuId string) int {
 	tmpUserInfo := dao.UserInfo{
 		StudentId: detail.StudentId,

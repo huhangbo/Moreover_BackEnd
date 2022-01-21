@@ -28,12 +28,12 @@ func PublishActivity(c *gin.Context) {
 func GetActivityById(c *gin.Context) {
 	stuId, _ := c.Get("stuId")
 	activityId := c.Param("activityId")
-	activityDetail := dao.ActivityDetail{
+	activityDetail := dao.ActivityDetailFollow{
 		Activity: dao.Activity{
 			ActivityId: activityId,
 		},
 	}
-	code := service.GetActivityDetailById(&activityDetail, stuId.(string))
+	code := service.GetActivityDetailFollow(&activityDetail, stuId.(string))
 	if code != response.SUCCESS {
 		response.Response(c, code, nil)
 		return
