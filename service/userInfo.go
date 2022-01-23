@@ -65,7 +65,7 @@ func GetUserInfoDetail(detail *dao.UserInfoDetail, stuId string) int {
 		return code
 	}
 	(*detail).UserInfo = tmpUserInfo
-	_, (*detail).Follower = util.GetTotalById("publisher", (*detail).StudentId, "parent")
+	_, (*detail).Follower = util.GetTotalById("publisher", (*detail).StudentId, "publisher")
 	_, (*detail).Fan, (*detail).IsFollow = util.GetTotalAndIs("parent", (*detail).StudentId, "parent", stuId)
 	return response.SUCCESS
 }
